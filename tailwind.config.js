@@ -5,6 +5,7 @@ module.exports = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  darkMode: "class", // Aktiviert Dark Mode über die 'dark' Klasse
   theme: {
     extend: {
       colors: {
@@ -29,6 +30,16 @@ module.exports = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        error: "hsl(var(--error))",
+        info: "hsl(var(--info))",
+        purple: "hsl(var(--purple))",
+        green: "hsl(var(--green))",
+        blue: "hsl(var(--blue))",
+        orange: "hsl(var(--orange))",
+        pink: "hsl(var(--pink))",
+        indigo: "hsl(var(--indigo))",
       },
       borderRadius: {
         lg: "var(--radius)",

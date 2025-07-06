@@ -1,0 +1,14 @@
+/* Test CSS file to verify styling is working */
+.test-red {
+  background-color: red !important;
+  color: white !important;
+  padding: 10px;
+  border: 2px solid blue;
+}
+
+.test-tailwind {
+  background-color: #3b82f6;
+  color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}

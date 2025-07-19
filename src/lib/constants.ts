@@ -98,14 +98,17 @@ export const errorTypes = [
 
 /**
  * Prompt Engineering Strategien
- * Zentrale Techniken für die LLM-Optimierung
+ * Zentrale Techniken für die LLM-Optimierung mit drei Varianten
  */
 export const promptStrategies = [
+  'A: STUDY-PURE - Originalgetreue IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"',
+  'B: PURE - Deutsche Adaptation minimalistischer UX-LLM Ansatz (IEEE Xplore: 11029918)', 
+  'C: EXTENDED - Thesis-Level Analyse mit detaillierter Expertise-Beschreibung',
   'Persona-Instruktion - Rollenzuweisung als UX-Experte',
-  'Strukturierte Eingabe - XML-ähnliche Tags zur Trennung',
+  'Strukturierte Eingabe - XML-ähnliche Tags zur Trennung vs. Originalformat',
   'Offene Problemidentifikation - Keine numerische Begrenzung',
   'Kontextbezogene Eingaben - App-Übersicht, Benutzeraufgabe, Screenshots',
-  'One-Shot/Few-Shot Prompting - Optionale Beispiele (optional)',
+  'One-Shot/Few-Shot Prompting - Optionale Beispiele',
   'Iterative Optimierung - Kontinuierliche Prompt-Verfeinerung'
 ]
 

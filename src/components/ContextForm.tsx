@@ -1,13 +1,14 @@
 'use client'
 
 import { FileText, Code, Target, Brain } from 'lucide-react'
+import { PromptVariant } from '@/lib/promptEngineering'
 
 interface ContextData {
   description: string
   uiCode: string
   userTask: string
   customPrompt: string
-  promptVariant: 'pure' | 'extended'  // Neue Eigenschaft für A/B Testing
+  promptVariant: PromptVariant  // Verwendung des importierten Types
 }
 
 interface ContextFormProps {
@@ -44,7 +45,7 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
     })
   }
 
-  const handlePromptVariantChange = (variant: 'pure' | 'extended') => {
+  const handlePromptVariantChange = (variant: PromptVariant) => {
     onContextChange({
       ...contextData,
       promptVariant: variant
@@ -172,16 +173,49 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
         </div>
       </div>
 
-      {/* Prompt Variant Selection für A/B Testing */}
+      {/* Prompt Variant Selection für A/B/C Testing */}
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Brain className="h-4 w-4 text-green-600 dark:text-green-400" />
           <label className="text-sm font-medium text-gray-900 dark:text-white">
-            Prompt-Variante für A/B Testing
+            Prompt-Variante für A/B/C Testing
           </label>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* PURE Variante */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* STUDY-PURE Variante (A) */}
+          <div 
+            className={`relative rounded-lg border-2 p-4 cursor-pointer transition-all ${
+              contextData.promptVariant === 'study-pure' 
+                ? 'border-red-500 bg-red-50 dark:bg-red-900/20' 
+                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-red-400'
+            }`}
+            onClick={() => handlePromptVariantChange('study-pure')}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                type="radio"
+                name="promptVariant"
+                value="study-pure"
+                checked={contextData.promptVariant === 'study-pure'}
+                onChange={() => handlePromptVariantChange('study-pure')}
+                className="text-red-600 focus:ring-red-500"
+              />
+              <label className="font-medium text-gray-900 dark:text-white">
+                STUDY-PURE (A)
+              </label>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              Originalgetreue IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"
+            </p>
+            <ul className="text-xs text-gray-500 dark:text-gray-500 space-y-1">
+              <li>• Exakte Replikation der Originalstudie</li>
+              <li>• Englischsprachige Prompts</li>
+              <li>• Direkte Vergleichbarkeit</li>
+              <li>• Minimale Instruktionen</li>
+            </ul>
+          </div>
+
+          {/* PURE Variante (B) */}
           <div 
             className={`relative rounded-lg border-2 p-4 cursor-pointer transition-all ${
               contextData.promptVariant === 'pure' 
@@ -200,21 +234,21 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
                 className="text-green-600 focus:ring-green-500"
               />
               <label className="font-medium text-gray-900 dark:text-white">
-                PURE (Studienbasiert)
+                PURE (B)
               </label>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Minimalistischer Ansatz basierend auf der UX-LLM Studie (IEEE Xplore: 11029918)
+              Deutsche Adaptation des minimalistischen Ansatzes
             </p>
             <ul className="text-xs text-gray-500 dark:text-gray-500 space-y-1">
               <li>• Kurze, prägnante Instruktionen</li>
               <li>• Offene Problemidentifikation</li>
-              <li>• Direkter Transfer aus veröffentlichter IEEE-Studie</li>
-              <li>• Ideal für Vergleichbarkeit mit der Studie</li>
+              <li>• Deutsche Übersetzung</li>
+              <li>• Strukturierte XML-Eingabe</li>
             </ul>
           </div>
 
-          {/* EXTENDED Variante */}
+          {/* EXTENDED Variante (C) */}
           <div 
             className={`relative rounded-lg border-2 p-4 cursor-pointer transition-all ${
               contextData.promptVariant === 'extended' 
@@ -233,7 +267,7 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
                 className="text-blue-600 focus:ring-blue-500"
               />
               <label className="font-medium text-gray-900 dark:text-white">
-                EXTENDED (Thesis-Level)
+                EXTENDED (C)
               </label>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
@@ -243,7 +277,7 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
               <li>• Strukturierte Problemkategorien</li>
               <li>• Wissenschaftliche Analysemethodik</li>
               <li>• Umfassende Qualitätskriterien</li>
-              <li>• Ideal für produktive Usability-Analysen</li>
+              <li>• Nielsen-Heuristiken Integration</li>
             </ul>
           </div>
         </div>
@@ -251,9 +285,9 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
           <div className="flex items-start gap-2">
             <Target className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
             <div className="text-xs text-yellow-700 dark:text-yellow-300">
-              <p className="font-medium mb-1">Analysemethoden-Vergleich:</p>
-              <p>Diese Einstellung ermöglicht den Vergleich zwischen verschiedenen Analysemethoden. 
-                 Testen Sie beide Varianten mit identischen Eingaben, um die Unterschiede in den Ergebnissen zu verstehen.</p>
+              <p className="font-medium mb-1">A/B/C Analysemethoden-Vergleich:</p>
+              <p>Diese Einstellung ermöglicht den Vergleich zwischen drei wissenschaftlich fundierten Analysemethoden. 
+                 Testen Sie alle Varianten mit identischen Eingaben, um die Unterschiede zu verstehen und empirische Daten für Ihre Forschung zu sammeln.</p>
             </div>
           </div>
         </div>

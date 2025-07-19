@@ -5,41 +5,49 @@ import { AppContext } from '@/types'
  * Basiert auf wissenschaftlicher Methodik der Bachelorarbeit
  * 
  * Diese Implementierung integriert Erkenntnisse aus der UX-LLM Studie (IEEE Xplore: 11029918)
- * und ermöglicht A/B Testing zwischen verschiedenen Prompt-Ansätzen.
+ * und ermöglicht A/B/C Testing zwischen verschiedenen Prompt-Ansätzen.
  */
 
 /**
  * Type für die verfügbaren Prompt-Varianten
  */
-export type PromptVariant = 'pure' | 'extended';
+export type PromptVariant = 'study-pure' | 'pure' | 'extended';
 
 export class PromptEngineer {
   /**
-   * A/B Testing Konfiguration für Prompt-Varianten
+   * A/B/C Testing Konfiguration für Prompt-Varianten
    * 
    * FORSCHUNGS-HINWEIS:
-   * Diese Implementierung ermöglicht das Testen zweier wissenschaftlich fundierter Prompt-Ansätze:
+   * Diese Implementierung ermöglicht das Testen dreier wissenschaftlich fundierter Prompt-Ansätze:
    * 
-   * 1. "PURE" - Minimalistischer Ansatz basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
+   * A. "STUDY-PURE" - Originale IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"
+   *    - Exakte Replikation der Originalstudie
+   *    - Englischsprachige Prompts wie in der Forschung
+   *    - Direkte Vergleichbarkeit mit publizierten Ergebnissen
+   *    - Minimale Instruktionen ohne zusätzliche Strukturierung
+   * 
+   * B. "PURE" - Adaptierte Version basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
+   *    - Deutsche Übersetzung des minimalistischen Ansatzes
    *    - Kurze, prägnante Instruktionen
    *    - Fokus auf offene Problemidentifikation
    *    - Keine detaillierten Kategorien oder Frameworks
-   *    - Direkter Transfer aus der veröffentlichten IEEE-Studie
    * 
-   * 2. "EXTENDED" - Erweiterte Variante für Thesis-Level Analyse
+   * C. "EXTENDED" - Erweiterte Variante für Thesis-Level Analyse
    *    - Detaillierte Expertise-Beschreibung
    *    - Strukturierte Problemkategorien
    *    - Wissenschaftliche Analysemethodik
    *    - Umfassende Qualitätskriterien
    * 
-   * Verwendung für A/B Testing:
-   * - Verwende 'PURE' für Vergleichbarkeit mit der UX-LLM Studie
+   * Verwendung für A/B/C Testing:
+   * - Verwende 'STUDY-PURE' für direkte Replikation der IEEE-Studie
+   * - Verwende 'PURE' für deutsche Adaptation der minimalistischen Methode
    * - Verwende 'EXTENDED' für detailliertere wissenschaftliche Analyse
-   * - Dokumentiere Ergebnisse beider Varianten für empirische Auswertung
+   * - Dokumentiere Ergebnisse aller Varianten für empirische Auswertung
    */
   static readonly PROMPT_VARIANTS = {
-    PURE: 'pure',      // Minimalistisch, studienbasiert
-    EXTENDED: 'extended' // Erweitert, thesis-level
+    STUDY_PURE: 'study-pure',  // A: Original IEEE-Studie
+    PURE: 'pure',              // B: Minimalistisch, studienbasiert (deutsch)
+    EXTENDED: 'extended'       // C: Erweitert, thesis-level
   } as const;
 
   /**
@@ -49,7 +57,7 @@ export class PromptEngineer {
    * @param appContext - App-Kontext für die Analyse
    * @param includeExamples - Ob Beispiele inkludiert werden sollen
    * @param customPrompt - Benutzerdefinierte Zusatzanweisungen
-   * @param variant - Prompt-Variante für A/B Testing ('pure' oder 'extended')
+   * @param variant - Prompt-Variante für A/B/C Testing ('study-pure', 'pure' oder 'extended')
    */
   static createUsabilityPrompt(
     appContext: AppContext, 
@@ -60,17 +68,21 @@ export class PromptEngineer {
     console.log('🔍 PromptEngineer Debug - Creating prompt with variant:', variant)
     
     // Auswahl der Prompt-Variante basierend auf Parameter
-    const systemPrompt = variant === 'pure' 
-      ? this.getPureSystemPrompt()
-      : this.getExtendedSystemPrompt()
+    const systemPrompt = variant === 'study-pure' 
+      ? this.getStudyPureSystemPrompt()
+      : variant === 'pure' 
+        ? this.getPureSystemPrompt()
+        : this.getExtendedSystemPrompt()
     
-    const structuredInput = this.formatStructuredInput(appContext)
+    const structuredInput = this.formatStructuredInput(appContext, variant)
     const examples = includeExamples ? this.getExamples() : ''
-    const instructions = variant === 'pure'
-      ? this.getPureInstructions()
-      : this.getExtendedInstructions()
+    const instructions = variant === 'study-pure'
+      ? this.getStudyPureInstructions()
+      : variant === 'pure'
+        ? this.getPureInstructions()
+        : this.getExtendedInstructions()
     
-    console.log('🔍 PromptEngineer Debug - Selected system prompt type:', variant === 'pure' ? 'PURE' : 'EXTENDED')
+    console.log('🔍 PromptEngineer Debug - Selected system prompt type:', variant)
     console.log('🔍 PromptEngineer Debug - System prompt length:', systemPrompt.length)
     console.log('🔍 PromptEngineer Debug - Instructions length:', instructions.length)
     
@@ -105,6 +117,23 @@ ${customPrompt}
 
 Integriere diese Anforderungen in deine Analyse und gehe besonders auf diese Aspekte ein.
 </zusaetzliche_anforderungen>`
+  }
+
+  /**
+   * STUDY-PURE System-Prompt basierend auf IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"
+   * Originalgetreue Replikation der in der Studie verwendeten Prompts (auf Englisch)
+   */
+  private static getStudyPureSystemPrompt(): string {
+    return `You are a UX expert for mobile apps.
+Your task is to identify usability issues with the
+information you get for an app's view.
+An example of a usability issue could be: 'Lack of
+visual feedback on user interactions'.
+Respond using app domain language; you must not use
+technical terminology or mention code details.
+Enumerate the problems identified; add an empty
+paragraph after each enumeration; no preceding
+or following text.`
   }
 
   /**
@@ -185,34 +214,6 @@ Antworte in der App-Domänen-Sprache; verwende keine technische Terminologie und
 - Fehlende Übereinstimmung mit mentalen Modellen der Nutzer
 - Abweichungen von branchenüblichen Standards
 
-### Effizienz und Kontrolle:
-- Umständliche oder ineffiziente Arbeitsabläufe
-- Fehlende Shortcuts oder Abkürzungen für wiederkehrende Aufgaben
-- Unzureichende Nutzerführung bei komplexen Prozessen
-- Fehlende Undo-/Redo-Funktionalität
-- Mangelnde Anpassungsmöglichkeiten an Nutzerpräferenzen
-
-### Aufgabenunterstützung und Nutzerführung:
-- Unnötige oder verwirrende Schritte in Arbeitsabläufen
-- Fehlende Hilfestellungen bei unklaren Funktionen
-- Unzureichende Orientierung über den aktuellen Status
-- Schwer nachvollziehbare Systemreaktionen
-- Fehlende Möglichkeit zur individuellen Anpassung
-
-### Lernbarkeit und Verständlichkeit:
-- Schwer erlernbare oder unlogische Bedienabläufe
-- Fehlende Erklärungen oder Hilfestellungen für neue Nutzer
-- Unerwartete Reaktionen des Systems auf Nutzereingaben
-- Inkonsistente Verhaltensmuster zwischen ähnlichen Funktionen
-- Fehlende Unterstützung beim Erlernen der App-Bedienung
-
-### Fehlerbehandlung und Prävention:
-- Fehlende Eingabevalidierung oder unklare Fehlermeldungen
-- Unzureichende Fehlerprävention bei kritischen Aktionen
-- Fehlende Bestätigungsdialoge bei wichtigen Entscheidungen
-- Schwer verständliche oder technische Fehlermeldungen
-- Fehlende Wiederherstellungsmöglichkeiten nach Fehlern
-
 ### Accessibility und Inklusion:
 - Probleme für Nutzer mit Sehbehinderungen
 - Fehlende alternative Texte oder Labels
@@ -239,30 +240,19 @@ Fokussiere auf die wichtigsten und wirkungsvollsten Usability-Probleme, die echt
   }
 
   /**
-   * PURE Instructions basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
-   * Minimale, offene Problemidentifikation ohne strukturelle Zwänge (auf Deutsch)
-   * 
-   * ULTRA-PURE VERSION: Entfernt sogar die Kategorisierungstags für maximale Studienkonformität
+   * STUDY-PURE Instructions basierend auf IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"
+   * Keine zusätzlichen Instruktionen - die Eingabe spricht für sich selbst wie in der Originalstudie
    */
-  private static getPureInstructions(): string {
-    return `Analysiere die bereitgestellte App-Ansicht und identifiziere Usability-Probleme. Konzentriere dich auf Probleme, die echte Nutzer in tatsächlichen Nutzungsszenarien beeinträchtigen würden.
-
-Beschreibe jedes Problem in einem separaten Absatz mit einer Leerzeile zwischen den Problemen. Verwende domänenspezifische Sprache und vermeide technische Terminologie.`
+  private static getStudyPureInstructions(): string {
+    return '' // Keine zusätzlichen Instruktionen im originalen Format
   }
 
   /**
-   * PURE Instructions mit Kategorisierung (für bessere UI-Integration)
-   * Behält die Studienkonformität bei, fügt aber Kategorien für UI-Darstellung hinzu
+   * PURE Instructions basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
+   * Minimale, offene Problemidentifikation ohne strukturelle Zwänge (auf Deutsch)
    */
-  private static getPureInstructionsWithCategories(): string {
+  private static getPureInstructions(): string {
     return `Analysiere die bereitgestellte App-Ansicht und identifiziere Usability-Probleme. Konzentriere dich auf Probleme, die echte Nutzer in tatsächlichen Nutzungsszenarien beeinträchtigen würden.
-
-WICHTIG: Beginne jeden Befund mit einer Bewertung in eckigen Klammern:
-- **[KATASTROPHAL]** für schwerwiegende Probleme
-- **[KRITISCH]** für schwere Probleme  
-- **[ERNST]** für erhebliche Probleme
-- **[GERING]** für kleinere Probleme
-- **[POSITIV]** für positive Aspekte
 
 Beschreibe jedes Problem in einem separaten Absatz mit einer Leerzeile zwischen den Problemen. Verwende domänenspezifische Sprache und vermeide technische Terminologie.`
   }
@@ -336,7 +326,7 @@ Konzentriere dich auf Probleme, die **echte Nutzer in realen Situationen** beein
 ## WICHTIG: Kategorisierung der Befunde
 Jeder Befund MUSS mit einer der folgenden Bewertungen beginnen:
 
-**[KATASTROPHAL]** - Für schwerwiegende Probleme, die die App unbrauchbar machen oder wichtige Aufgaben komplett blockieren oder gefahr für Leben sind und eine größerer Schaden entstehen kann
+**[KATASTROPHAL]** - Für schwerwiegende Probleme, die die App unbrauchbar machen oder wichtige Aufgaben komplett blockieren
 **[KRITISCH]** - Für schwere Probleme, die die Nutzerfreundlichkeit stark beeinträchtigen
 **[ERNST]** - Für erhebliche Probleme, die die Nutzererfahrung spürbar verschlechtern
 **[GERING]** - Für kleinere Probleme, die nur geringfügige Auswirkungen haben
@@ -370,8 +360,17 @@ Führe eine offene, explorative Problemidentifikation durch ohne Begrenzung der 
    * Strukturierte Eingabe mit XML-ähnlichen Tags
    * Basiert auf UX-LLM Studie: "Use delimiters to clearly indicate distinct parts of the input"
    * Trennt verschiedene Informationskomponenten klar voneinander für bessere LLM-Verarbeitung
+   * 
+   * @param appContext - Der App-Kontext
+   * @param variant - Die Prompt-Variante (bestimmt das Format)
    */
-  private static formatStructuredInput(appContext: AppContext): string {
+  private static formatStructuredInput(appContext: AppContext, variant?: PromptVariant): string {
+    // Für STUDY-PURE verwenden wir das originale Format aus der IEEE-Studie
+    if (variant === 'study-pure') {
+      return this.formatStudyPureInput(appContext)
+    }
+    
+    // Für andere Varianten verwenden wir das XML-ähnliche Format
     return `<app_context>
 <app_overview>
 ${appContext.appDescription}
@@ -393,6 +392,23 @@ ${appContext.sourceCode}
 <image>
 [The provided image shows the current state of the application]
 </image>`
+  }
+
+  /**
+   * Formatiert die Eingabe im originalen IEEE-Studien-Format
+   */
+  private static formatStudyPureInput(appContext: AppContext): string {
+    return `I have an iOS app about: ${appContext.appDescription}
+The user's task in this app view is about: ${appContext.userTask}.
+An image of the app view is provided.
+Below is the incomplete SwiftUI code for the app
+view.
+This code includes the view's user interface and a
+view model for logic handling.
+It may also include additional components like
+subviews, models, or preview code.
+Source Code:
+${appContext.sourceCode || '[No source code provided]'}`
   }
 
   /**
@@ -463,14 +479,26 @@ Fokussiere stattdessen auf:
   }
 
   /**
-   * A/B Testing Utility für einfache Prompt-Varianten-Auswahl
-   * Bietet eine einfache Schnittstelle für das Testen beider Varianten
+   * A/B/C Testing Utility für einfache Prompt-Varianten-Auswahl
+   * Bietet eine einfache Schnittstelle für das Testen aller drei Varianten
    * 
    * @param appContext - App-Kontext für die Analyse
-   * @param testPure - Wenn true, wird die PURE Variante verwendet, sonst EXTENDED
+   * @param variant - Welche Variante verwendet werden soll
    * @param includeExamples - Ob Beispiele inkludiert werden sollen
    * @param customPrompt - Optionale benutzerdefinierte Zusatzanweisungen
    * @returns Strukturierter Prompt für die gewählte Variante
+   */
+  static createABCTestPrompt(
+    appContext: AppContext,
+    variant: PromptVariant = 'extended',
+    includeExamples: boolean = false,
+    customPrompt?: string
+  ): string {
+    return this.createUsabilityPrompt(appContext, includeExamples, customPrompt, variant)
+  }
+
+  /**
+   * Legacy A/B Testing Utility - behält Kompatibilität bei
    */
   static createABTestPrompt(
     appContext: AppContext,
@@ -479,18 +507,32 @@ Fokussiere stattdessen auf:
     customPrompt?: string
   ): string {
     const variant: PromptVariant = testPure ? 'pure' : 'extended'
-    
     return this.createUsabilityPrompt(appContext, includeExamples, customPrompt, variant)
   }
 
   /**
-   * Erstellt beide Prompt-Varianten für direkten Vergleich
+   * Erstellt alle drei Prompt-Varianten für direkten Vergleich
    * Nützlich für die wissenschaftliche Auswertung und Dokumentation
    * 
    * @param appContext - App-Kontext für die Analyse
    * @param includeExamples - Ob Beispiele inkludiert werden sollen
    * @param customPrompt - Optionale benutzerdefinierte Zusatzanweisungen
-   * @returns Objekt mit beiden Prompt-Varianten
+   * @returns Objekt mit allen drei Prompt-Varianten
+   */
+  static createAllVariants(
+    appContext: AppContext,
+    includeExamples: boolean = false,
+    customPrompt?: string
+  ): { studyPure: string; pure: string; extended: string } {
+    return {
+      studyPure: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'study-pure'),
+      pure: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'pure'),
+      extended: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'extended')
+    }
+  }
+
+  /**
+   * Legacy-Kompatibilität: Erstellt beide ursprüngliche Varianten
    */
   static createBothVariants(
     appContext: AppContext,

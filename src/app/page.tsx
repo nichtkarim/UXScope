@@ -13,6 +13,7 @@ import MethodologyView from '@/components/MethodologyView'
 import MethodologyReflection from '@/components/MethodologyReflection'
 import { profileStorage, analysisHistory } from '@/lib/storage'
 import { Profile, LLMAnalysis, UsabilityProblem } from '@/types'
+import { PromptVariant } from '@/lib/promptEngineering'
 
 export default function Home() {
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -23,7 +24,7 @@ export default function Home() {
     uiCode: '',
     userTask: '',
     customPrompt: '',
-    promptVariant: 'extended' as 'pure' | 'extended'  // Default auf extended
+    promptVariant: 'extended' as PromptVariant  // Default auf extended
   })
   const [analysis, setAnalysis] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)

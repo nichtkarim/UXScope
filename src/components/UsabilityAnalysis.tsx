@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { BarChart3, Loader2, CheckCircle, AlertCircle, XCircle, User, Star, Clock, Target, BookOpen, Eye, Shield, Zap, Palette, HelpCircle, Download, RefreshCw, TrendingUp, Award, FileText, Skull } from 'lucide-react'
+import { PromptVariant } from '@/lib/promptEngineering'
 
 interface UsabilityAnalysisProps {
   analysis: string | null
   isAnalyzing: boolean
   onReset?: () => void
-  promptVariant?: 'pure' | 'extended'
+  promptVariant?: PromptVariant
   promptUsed?: string
   metadata?: {
     llmModel: string
@@ -77,9 +78,11 @@ ${analysis}
 
 ---
 Erstellt mit Usability Tester - LLM-basierte Usability-Evaluation
-${variant === 'extended' 
-  ? 'Basierend auf Nielsen\'s Heuristiken, ISO 9241-11 und WCAG 2.1' 
-  : 'Basierend auf der UX-LLM Studie (IEEE Xplore: 11029918)'
+${variant === 'study-pure'
+  ? 'Basierend auf der originalen IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"'
+  : variant === 'extended' 
+    ? 'Basierend auf Nielsen\'s Heuristiken, ISO 9241-11 und WCAG 2.1' 
+    : 'Basierend auf der UX-LLM Studie (IEEE Xplore: 11029918)'
 }
     `.trim()
     
@@ -643,12 +646,18 @@ ${variant === 'extended'
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Prompt-Variante</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {variant === 'pure' ? 'Pure (Studienbasiert)' : 'Extended (Wissenschaftlich)'}
+                  {variant === 'study-pure' 
+                    ? 'Study-Pure (A)' 
+                    : variant === 'pure' 
+                      ? 'Pure (B)' 
+                      : 'Extended (C)'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-500">
-                  {variant === 'pure'
-                    ? 'Basiert auf UX-LLM Studie (IEEE)'
-                    : 'Umfassende Analyse mit Nielsen\'s Heuristiken'}
+                  {variant === 'study-pure'
+                    ? 'Originalgetreue IEEE-Studie'
+                    : variant === 'pure'
+                      ? 'Deutsche Adaptation (UX-LLM Studie)'
+                      : 'Umfassende Analyse mit Nielsen\'s Heuristiken'}
                 </p>
                 </div>
                 

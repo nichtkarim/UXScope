@@ -11,7 +11,7 @@ import { AppContext } from '@/types'
 /**
  * Type für die verfügbaren Prompt-Varianten
  */
-export type PromptVariant = 'study-pure' | 'pure' | 'extended';
+export type PromptVariant = 'study-pure' | 'basic' | 'advanced';
 
 export class PromptEngineer {
   /**
@@ -26,13 +26,13 @@ export class PromptEngineer {
    *    - Direkte Vergleichbarkeit mit publizierten Ergebnissen
    *    - Minimale Instruktionen ohne zusätzliche Strukturierung
    * 
-   * B. "PURE" - Adaptierte Version basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
+   * B. "BASIC" - Adaptierte Version basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
    *    - Deutsche Übersetzung des minimalistischen Ansatzes
    *    - Kurze, prägnante Instruktionen
    *    - Fokus auf offene Problemidentifikation
    *    - Keine detaillierten Kategorien oder Frameworks
    * 
-   * C. "EXTENDED" - Erweiterte Variante für Thesis-Level Analyse
+   * C. "ADVANCED" - Erweiterte Variante für Thesis-Level Analyse
    *    - Detaillierte Expertise-Beschreibung
    *    - Strukturierte Problemkategorien
    *    - Wissenschaftliche Analysemethodik
@@ -40,14 +40,14 @@ export class PromptEngineer {
    * 
    * Verwendung für A/B/C Testing:
    * - Verwende 'STUDY-PURE' für direkte Replikation der IEEE-Studie
-   * - Verwende 'PURE' für deutsche Adaptation der minimalistischen Methode
-   * - Verwende 'EXTENDED' für detailliertere wissenschaftliche Analyse
+   * - Verwende 'BASIC' für deutsche Adaptation der minimalistischen Methode
+   * - Verwende 'ADVANCED' für detailliertere wissenschaftliche Analyse
    * - Dokumentiere Ergebnisse aller Varianten für empirische Auswertung
    */
   static readonly PROMPT_VARIANTS = {
     STUDY_PURE: 'study-pure',  // A: Original IEEE-Studie
-    PURE: 'pure',              // B: Minimalistisch, studienbasiert (deutsch)
-    EXTENDED: 'extended'       // C: Erweitert, thesis-level
+    BASIC: 'basic',              // B: Minimalistisch, studienbasiert (deutsch)
+    ADVANCED: 'advanced'       // C: Erweitert, thesis-level
   } as const;
 
   /**
@@ -57,37 +57,51 @@ export class PromptEngineer {
    * @param appContext - App-Kontext für die Analyse
    * @param includeExamples - Ob Beispiele inkludiert werden sollen
    * @param customPrompt - Benutzerdefinierte Zusatzanweisungen
-   * @param variant - Prompt-Variante für A/B/C Testing ('study-pure', 'pure' oder 'extended')
+   * @param variant - Prompt-Variante für A/B/C Testing ('study-pure', 'basic' oder 'advanced')
+   * @param language - Sprache der Prompts ('de' für Deutsch, 'en' für Englisch)
    */
   static createUsabilityPrompt(
     appContext: AppContext, 
     includeExamples: boolean = false, 
     customPrompt?: string,
-    variant: PromptVariant = 'extended'
+    variant: PromptVariant = 'advanced',
+    language: 'de' | 'en' = 'de'
   ): string {
     console.log('🔍 PromptEngineer Debug - Creating prompt with variant:', variant)
     
-    // Auswahl der Prompt-Variante basierend auf Parameter
-    const systemPrompt = variant === 'study-pure' 
-      ? this.getStudyPureSystemPrompt()
-      : variant === 'pure' 
-        ? this.getPureSystemPrompt()
-        : this.getExtendedSystemPrompt()
+    // Für STUDY-PURE: Nur System-Prompt + User-Input (originalgetreu)
+    if (variant === 'study-pure') {
+      const systemPrompt = this.getStudyPureSystemPrompt(language)
+      const userInput = this.formatStudyPureInput(appContext, language)
+      
+      console.log('🔍 PromptEngineer Debug - STUDY-PURE: System prompt length:', systemPrompt.length)
+      console.log('🔍 PromptEngineer Debug - STUDY-PURE: User input length:', userInput.length)
+      console.log('🔍 PromptEngineer Debug - STUDY-PURE: Language:', language)
+      
+      // Für STUDY-PURE werden keine Custom-Prompts, Beispiele oder zusätzliche Instruktionen verwendet
+      // um die Originalität der IEEE-Studie zu bewahren
+      return `${systemPrompt}
+
+${userInput}`
+    }
     
-    const structuredInput = this.formatStructuredInput(appContext, variant)
-    const examples = includeExamples ? this.getExamples() : ''
-    const instructions = variant === 'study-pure'
-      ? this.getStudyPureInstructions()
-      : variant === 'pure'
-        ? this.getPureInstructions()
-        : this.getExtendedInstructions()
+    // Für andere Varianten: Vollständige Struktur
+    const systemPrompt = variant === 'basic' 
+      ? this.getBasicSystemPrompt(language)
+      : this.getAdvancedSystemPrompt(language)
+    
+    const structuredInput = this.formatStructuredInput(appContext, variant, language)
+    const examples = includeExamples ? this.getExamples(language) : ''
+    const instructions = variant === 'basic'
+      ? this.getBasicInstructions(language)
+      : this.getAdvancedInstructions(language)
     
     console.log('🔍 PromptEngineer Debug - Selected system prompt type:', variant)
     console.log('🔍 PromptEngineer Debug - System prompt length:', systemPrompt.length)
     console.log('🔍 PromptEngineer Debug - Instructions length:', instructions.length)
     
     // Benutzerdefinierte Prompt einbinden, falls vorhanden
-    const customInstructions = customPrompt ? this.formatCustomPrompt(customPrompt) : ''
+    const customInstructions = customPrompt ? this.formatCustomPrompt(customPrompt, language) : ''
     
     const finalPrompt = `${systemPrompt}
 
@@ -108,7 +122,18 @@ ${customInstructions}`
   /**
    * Formatiert die benutzerdefinierte Prompt
    */
-  private static formatCustomPrompt(customPrompt: string): string {
+  private static formatCustomPrompt(customPrompt: string, language: 'de' | 'en' = 'de'): string {
+    if (language === 'en') {
+      return `
+<additional_requirements>
+Additionally consider the following specific user requirements:
+
+${customPrompt}
+
+Integrate these requirements into your analysis and pay special attention to these aspects.
+</additional_requirements>`
+    }
+    
     return `
 <zusaetzliche_anforderungen>
 Berücksichtige zusätzlich folgende spezifische Anforderungen des Benutzers:
@@ -122,8 +147,22 @@ Integriere diese Anforderungen in deine Analyse und gehe besonders auf diese Asp
   /**
    * STUDY-PURE System-Prompt basierend auf IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"
    * Originalgetreue Replikation der in der Studie verwendeten Prompts (auf Englisch)
+   * Jetzt auch mit deutscher Übersetzung verfügbar
    */
-  private static getStudyPureSystemPrompt(): string {
+  private static getStudyPureSystemPrompt(language: 'de' | 'en' = 'en'): string {
+    if (language === 'de') {
+      return `Du bist ein UX-Experte für mobile Apps.
+Deine Aufgabe ist es, Usability-Probleme anhand der 
+Informationen zu identifizieren, die du über eine App-Ansicht erhältst.
+Ein Beispiel für ein Usability-Problem könnte sein: 'Fehlendes
+visuelles Feedback bei Nutzerinteraktionen'.
+Antworte in der Sprache der App-Domäne; du darfst keine
+technische Terminologie verwenden oder Code-Details erwähnen.
+Zähle die identifizierten Probleme auf; füge nach jeder 
+Aufzählung einen leeren Absatz hinzu; kein vorangestellter
+oder nachfolgender Text.`
+    }
+    
     return `You are a UX expert for mobile apps.
 Your task is to identify usability issues with the
 information you get for an app's view.
@@ -137,21 +176,31 @@ or following text.`
   }
 
   /**
-   * PURE System-Prompt basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
-   * Minimalistische Instruktionen für studienkonformen Ansatz (auf Deutsch)
+   * BASIC System-Prompt basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
+   * Minimalistische Instruktionen für studienkonformen Ansatz
    */
-  private static getPureSystemPrompt(): string {
+  private static getBasicSystemPrompt(language: 'de' | 'en' = 'de'): string {
+    if (language === 'en') {
+      return `You are a UX expert for mobile apps. Your task is to identify usability issues based on the information you get about an app view. An example of a usability issue could be: 'Lack of visual feedback on user interactions'.
+
+Respond using app domain language; you must not use technical terminology or mention code details. Enumerate the problems identified; add an empty paragraph after each enumeration; no preceding or following text.`
+    }
+    
     return `Du bist ein UX-Experte für mobile Apps. Deine Aufgabe ist es, Usability-Probleme basierend auf den Informationen über eine App-Ansicht zu identifizieren. Ein Beispiel für ein Usability-Problem könnte sein: 'Fehlendes visuelles Feedback bei Nutzerinteraktionen'.
 
 Antworte in der App-Domänen-Sprache; verwende keine technische Terminologie und erwähne keine Code-Details. Zähle die identifizierten Probleme auf; füge einen leeren Absatz nach jeder Aufzählung hinzu; keine einleitenden oder abschließenden Texte.`
   }
 
   /**
-   * EXTENDED System-Prompt für detaillierte Thesis-Level Analyse
+   * ADVANCED System-Prompt für detaillierte Thesis-Level Analyse
    * Umfassende Expertise-Beschreibung mit wissenschaftlicher Fundierung
    * Subtile Integration von Nielsen's Heuristiken und ISO-Standards als Bewertungskriterien
    */
-  private static getExtendedSystemPrompt(): string {
+  private static getAdvancedSystemPrompt(language: 'de' | 'en' = 'de'): string {
+    if (language === 'en') {
+      return this.getAdvancedSystemPromptEN()
+    }
+    
     return `Du bist ein erfahrener UX-Experte mit spezialisierter Expertise in der mobilen App-Evaluation. Deine Aufgabe ist es, Usability-Probleme systematisch zu identifizieren und zu bewerten, basierend auf etablierten UX-Prinzipien und wissenschaftlichen Erkenntnissen.
 
 ## Deine Expertise umfasst:
@@ -240,6 +289,99 @@ Fokussiere auf die wichtigsten und wirkungsvollsten Usability-Probleme, die echt
   }
 
   /**
+   * ADVANCED System-Prompt für detaillierte Thesis-Level Analyse (Englisch)
+   * Umfassende Expertise-Beschreibung mit wissenschaftlicher Fundierung
+   * Subtile Integration von Nielsen's Heuristiken und ISO-Standards als Bewertungskriterien
+   */
+  private static getAdvancedSystemPromptEN(): string {
+    return `You are an experienced UX expert with specialized expertise in mobile app evaluation. Your task is to systematically identify and assess usability issues based on established UX principles and scientific findings.
+
+## Your expertise includes:
+• **Mobile Usability**: Specialized knowledge of iOS and Android interface guidelines
+• **Visual Hierarchy**: Analysis of contrasts, typography, and layout structures  
+• **Interaction Design**: Evaluation of touch targets, feedback mechanisms, and micro-interactions
+• **Accessibility**: WCAG 2.1 compliance and assistive technologies
+• **User Psychology**: Mental models, cognitive load, and attention guidance
+• **User Guidance**: Analysis of workflows, learnability, and user autonomy
+
+## Analysis methodology (based on UX-LLM research):
+**Focus on the following proven problem categories:**
+
+### Visual and Perception Problems:
+- Contrast issues between text and background
+- Inconsistent color schemes or theme handling
+- Missing visual hierarchy or information architecture
+- Illegible or too small font sizes
+- Problematic icon usage without labels
+
+### Interaction and Feedback Problems:
+- Lack of visual feedback on user interactions
+- Unclear or ambiguous controls
+- Too small touch targets (below 44px)
+- Inconsistent interaction patterns
+- Missing or confusing loading states
+
+### Navigation and Orientation Problems:
+- Unclear navigation or information architecture
+- Missing orientation aids (breadcrumbs, progress indicators)
+- Inconsistent or confusing button labels
+- Problematic back button functionality
+- Ambiguous or hidden features
+
+### Content and Comprehensibility Problems:
+- Unclear or missing descriptions
+- Inconsistent terminology
+- Missing mandatory field indicators
+- Information overload or unstructured content
+- Missing help or context information
+
+### Efficiency and Control:
+- Cumbersome or inefficient workflows
+- Missing shortcuts or abbreviations for recurring tasks
+- Insufficient user guidance for complex processes
+- Missing undo/redo functionality
+- Lack of customization options for user preferences
+
+### Error Handling and Prevention:
+- Missing input validation or unclear error messages
+- Insufficient error prevention for critical actions
+- Missing confirmation dialogs for important decisions
+- Hard-to-understand or technical error messages
+- Missing recovery options after errors
+
+### Consistency and Standards:
+- Deviations from established platform conventions
+- Inconsistent terminology or labeling
+- Contradictory interaction patterns within the app
+- Lack of alignment with users' mental models
+- Deviations from industry standards
+
+### Accessibility and Inclusion:
+- Problems for users with visual impairments
+- Missing alternative texts or labels
+- Problematic color coding as the only information
+- Lack of keyboard navigation support
+- Insufficient support for assistive technologies
+
+## Important Analysis Principles:
+- **User-centered**: Describe problems from the perspective of real users, not from a technical perspective
+- **Concrete and specific**: Reference specific UI elements and their problems
+- **Contextual**: Consider different usage scenarios and user groups
+- **Evidence-based**: Justify each problem with understandable effects
+- **Solution-oriented**: Imply practical improvement possibilities
+
+## Output format:
+Structure your analysis clearly and concisely:
+1. Identify problems without numbering or bullet points
+2. Describe each problem in a separate paragraph
+3. Use clear, understandable language without technical terms
+4. Add a blank line after each enumeration
+5. Avoid introductory or concluding texts
+
+Focus on the most important and effective usability problems that real users would be hindered by in real situations.`
+  }
+
+  /**
    * STUDY-PURE Instructions basierend auf IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"
    * Keine zusätzlichen Instruktionen - die Eingabe spricht für sich selbst wie in der Originalstudie
    */
@@ -248,20 +390,99 @@ Fokussiere auf die wichtigsten und wirkungsvollsten Usability-Probleme, die echt
   }
 
   /**
-   * PURE Instructions basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
-   * Minimale, offene Problemidentifikation ohne strukturelle Zwänge (auf Deutsch)
+   * BASIC Instructions basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
+   * Minimale, offene Problemidentifikation ohne strukturelle Zwänge
    */
-  private static getPureInstructions(): string {
+  private static getBasicInstructions(language: 'de' | 'en' = 'de'): string {
+    if (language === 'en') {
+      return `Analyze the provided app view and identify usability issues. Focus on problems that would affect real users in actual usage scenarios.
+
+Describe each problem in a separate paragraph with an empty line between problems. Use domain-specific language and avoid technical terminology.`
+    }
+    
     return `Analysiere die bereitgestellte App-Ansicht und identifiziere Usability-Probleme. Konzentriere dich auf Probleme, die echte Nutzer in tatsächlichen Nutzungsszenarien beeinträchtigen würden.
 
 Beschreibe jedes Problem in einem separaten Absatz mit einer Leerzeile zwischen den Problemen. Verwende domänenspezifische Sprache und vermeide technische Terminologie.`
   }
 
   /**
-   * EXTENDED Instructions für detaillierte wissenschaftliche Analyse
+   * ADVANCED Instructions für detaillierte wissenschaftliche Analyse
    * Umfassende Anweisungen für systematische Problemidentifikation
    */
-  private static getExtendedInstructions(): string {
+  private static getAdvancedInstructions(language: 'de' | 'en' = 'de'): string {
+    if (language === 'en') {
+      return `<instructions>
+Analyze the provided app view and identify usability issues based on the app domain and user perspective.
+
+## Structured Input Analysis:
+You will receive the following information:
+- **App Description**: Context and purpose of the application
+- **User Task**: Main goal of interaction with this view  
+- **View Name**: Name of the current screen view
+- **Source Code**: SwiftUI/React/Other code of the view (if available)
+- **Screenshot**: Visual state of the application
+
+## Analysis Focus (based on UX-LLM Research):
+Focus on problems that affect **real users in actual situations**:
+
+### Visual Perception:
+- Color contrasts and readability in different lighting conditions
+- Font sizes and their scalability  
+- Visual hierarchy and information architecture
+- Icon comprehensibility without text labels
+
+### Interaction and Feedback:
+- Visual feedback on user interactions
+- Touch target sizes (minimum 44px for mobile devices)
+- Loading states and wait time indicators
+- Clarity of interactive elements
+
+### Navigation and Orientation:
+- Clarity of navigation structure
+- Orientation aids and progress indicators
+- Back button functionality and labeling
+- Discoverability of hidden functions
+
+### Content and Comprehensibility:
+- Clarity of descriptions and labels
+- Consistency in terminology and designations
+- Marking of required fields
+- Comprehensibility of error messages
+
+### Accessibility:
+- Support for users with visual impairments
+- Alternative texts and labels for screen readers
+- Keyboard navigation and assistive technologies
+- Color coding as the only source of information
+
+## Output Format (strictly follow):
+- **No introductory or concluding texts**
+- **Each problem in a standalone paragraph**
+- **One blank line after each problem**
+- **User-oriented language without technical jargon**
+- **No numbering or bullet points**
+- **Don't mention code details or technical terminology**
+
+## IMPORTANT: Categorization of Findings
+Each finding MUST begin with one of the following assessments:
+
+**[CATASTROPHIC]** - For severe problems that make the app unusable or completely block important tasks
+**[CRITICAL]** - For serious problems that strongly impair user-friendliness
+**[SERIOUS]** - For significant problems that noticeably worsen the user experience
+**[MINOR]** - For smaller problems that have only minor effects
+**[POSITIVE]** - For positive aspects and strengths of the user interface
+
+Example of correct format:
+**[CRITICAL]** Missing interaction hints make it difficult for users to understand which elements are clickable.
+
+**[POSITIVE]** The color scheme is consistent and supports a clear visual hierarchy.
+
+**[SERIOUS]** Font sizes that are too small can impair readability in poor lighting conditions.
+
+Conduct an open, exploratory problem identification without limiting the number of problems. Let yourself be guided by the provided input and identify the most important usability challenges for real users.
+</instructions>`
+    }
+    
     return `<instructions>
 Analysiere die bereitgestellte App-Ansicht und identifiziere Usability-Probleme basierend auf der App-Domäne und Nutzerperspektive.
 
@@ -306,15 +527,6 @@ Konzentriere dich auf Probleme, die **echte Nutzer in realen Situationen** beein
 - Keyboard-Navigation und assistive Technologien
 - Farbkodierung als einzige Informationsquelle
 
-### Arbeitsabläufe und Nutzerführung:
-- Sind alle Schritte zur Aufgabenerledigung klar und logisch?
-- Verstehen Nutzer intuitiv, was sie als nächstes tun sollen?
-- Können Nutzer ihre Eingaben kontrollieren und korrigieren?
-- Reagiert die App so, wie Nutzer es erwarten würden?
-- Werden Nutzer bei Fehlern angemessen unterstützt?
-- Können erfahrene Nutzer die App an ihre Bedürfnisse anpassen?
-- Ist die App auch für neue Nutzer leicht erlernbar?
-
 ## Ausgabeformat (strikt befolgen):
 - **Keine einleitende oder abschließende Texte**
 - **Jedes Problem in einem eigenständigen Absatz**
@@ -339,19 +551,6 @@ Beispiel für korrektes Format:
 
 **[ERNST]** Zu kleine Schriftgrößen können die Lesbarkeit bei schlechten Lichtverhältnissen beeinträchtigen.
 
-## Qualitätskriterien:
-- **Spezifisch**: Referenziere konkrete UI-Elemente
-- **Nachvollziehbar**: Erkläre die Auswirkung auf Nutzer
-- **Kontextbezogen**: Berücksichtige verschiedene Nutzungsszenarien
-- **Realistisch**: Fokussiere auf tatsächlich vorhandene Probleme
-- **Nutzerorientiert**: Beschreibe aus echter Nutzerperspektive
-
-## Anti-Halluzination-Prinzipien:
-- Identifiziere nur Probleme, die im bereitgestellten Material erkennbar sind
-- Spekuliere nicht über nicht sichtbare Funktionen
-- Vermeide technische Implementierungsdetails
-- Fokussiere auf direkt beobachtbare Usability-Aspekte
-
 Führe eine offene, explorative Problemidentifikation durch ohne Begrenzung der Anzahl der Probleme. Lass dich von der bereitgestellten Eingabe leiten und identifiziere die wichtigsten Usability-Herausforderungen für echte Nutzer.
 </instructions>`
   }
@@ -364,14 +563,15 @@ Führe eine offene, explorative Problemidentifikation durch ohne Begrenzung der 
    * @param appContext - Der App-Kontext
    * @param variant - Die Prompt-Variante (bestimmt das Format)
    */
-  private static formatStructuredInput(appContext: AppContext, variant?: PromptVariant): string {
+  private static formatStructuredInput(appContext: AppContext, variant?: PromptVariant, language: 'de' | 'en' = 'de'): string {
     // Für STUDY-PURE verwenden wir das originale Format aus der IEEE-Studie
     if (variant === 'study-pure') {
-      return this.formatStudyPureInput(appContext)
+      return this.formatStudyPureInput(appContext, language)
     }
     
     // Für andere Varianten verwenden wir das XML-ähnliche Format
-    return `<app_context>
+    if (language === 'en') {
+      return `<app_context>
 <app_overview>
 ${appContext.appDescription}
 </app_overview>
@@ -392,12 +592,50 @@ ${appContext.sourceCode}
 <image>
 [The provided image shows the current state of the application]
 </image>`
+    }
+    
+    return `<app_context>
+<app_overview>
+${appContext.appDescription}
+</app_overview>
+
+<user_task>
+${appContext.userTask}
+</user_task>
+
+<view_name>
+${appContext.viewName}
+</view_name>
+
+${appContext.sourceCode ? `<source_code>
+${appContext.sourceCode}
+</source_code>` : ''}
+</app_context>
+
+<image>
+[Das bereitgestellte Bild zeigt den aktuellen Zustand der Anwendung]
+</image>`
   }
 
   /**
    * Formatiert die Eingabe im originalen IEEE-Studien-Format
+   * Jetzt auch mit deutscher Übersetzung verfügbar
    */
-  private static formatStudyPureInput(appContext: AppContext): string {
+  private static formatStudyPureInput(appContext: AppContext, language: 'de' | 'en' = 'en'): string {
+    if (language === 'de') {
+      return `Ich habe eine iOS-App über: ${appContext.appDescription}
+Die Aufgabe des Nutzers in dieser App-Ansicht handelt von: ${appContext.userTask}.
+Ein Bild der App-Ansicht wird bereitgestellt.
+Unten ist der unvollständige SwiftUI-Code für die App-
+Ansicht.
+Dieser Code enthält die Benutzeroberfläche der Ansicht und ein
+View Model für die Logik-Behandlung.
+Er kann auch zusätzliche Komponenten wie
+Unteransichten, Modelle oder Vorschau-Code enthalten.
+Quellcode:
+${appContext.sourceCode || '[Kein Quellcode bereitgestellt]'}`
+    }
+    
     return `I have an iOS app about: ${appContext.appDescription}
 The user's task in this app view is about: ${appContext.userTask}.
 An image of the app view is provided.
@@ -416,25 +654,49 @@ ${appContext.sourceCode || '[No source code provided]'}`
    * Basiert auf UX-LLM Studie: Offene Problemidentifikation ohne strukturelle Zwänge
    * Nutzt One-Shot Prompting mit konkreten Beispielen aus der wissenschaftlichen Forschung
    */
-  private static getExamples(): string {
-    return `<examples>
+  private static getExamples(language: 'de' | 'en' = 'de'): string {
+    if (language === 'de') {
+      return `<examples>
 **Beispiel eines validen Usability-Problems (basierend auf UX-LLM Forschung):**
 
-"Insufficient contrast between text and background color: The yellow background with white text on the category buttons may not provide enough contrast for users with visual impairments or when viewing in bright light conditions."
+"Unzureichender Kontrast zwischen Text und Hintergrundfarbe: Der gelbe Hintergrund mit weißem Text bei den Kategorie-Buttons bietet möglicherweise nicht genügend Kontrast für Nutzer mit Sehbehinderungen oder bei hellem Licht."
 
 **Beispiel eines Interaktionsproblems:**
 
-"No visual feedback on button press: The category buttons do not appear to have any visual feedback when tapped, which could leave users uncertain whether their input has been registered."
+"Fehlendes visuelles Feedback beim Button-Druck: Die Kategorie-Buttons scheinen kein visuelles Feedback beim Antippen zu haben, was Nutzer unsicher machen könnte, ob ihre Eingabe registriert wurde."
 
 **Beispiel eines Navigationsproblems:**
 
-"Lack of clear navigation cues: There is no clear indication of how to proceed to the next question after a selection is made, which could lead to user confusion."
+"Fehlende klare Navigationshinweise: Es gibt keine klare Anzeige, wie nach einer Auswahl zur nächsten Frage fortgefahren werden kann, was zu Nutzerverwirrung führen könnte."
 
 **Beispiel eines Barrierefreiheitsproblems:**
 
-"Inadequate touch targets: The button may have an inadequate touch target size, which could make it difficult for users to tap accurately, especially on devices with smaller screens."
+"Unzureichende Touch-Targets: Der Button könnte eine unzureichende Touch-Target-Größe haben, was es für Nutzer schwierig machen könnte, präzise zu tippen, besonders auf kleineren Bildschirmen."
 
 **Beispiel eines Verständlichkeitsproblems:**
+
+"Mehrdeutige Fortschrittsanzeige: Die Fortschrittsleiste hat keine Beschriftung oder Anzeige dessen, was sie repräsentiert, was zu Verwirrung über den Nutzerfortschritt führen könnte."
+</examples>`
+    }
+    
+    return `<examples>
+**Example of a valid usability problem (based on UX-LLM research):**
+
+"Insufficient contrast between text and background color: The yellow background with white text on the category buttons may not provide enough contrast for users with visual impairments or when viewing in bright light conditions."
+
+**Example of an interaction problem:**
+
+"No visual feedback on button press: The category buttons do not appear to have any visual feedback when tapped, which could leave users uncertain whether their input has been registered."
+
+**Example of a navigation problem:**
+
+"Lack of clear navigation cues: There is no clear indication of how to proceed to the next question after a selection is made, which could lead to user confusion."
+
+**Example of an accessibility problem:**
+
+"Inadequate touch targets: The button may have an inadequate touch target size, which could make it difficult for users to tap accurately, especially on devices with smaller screens."
+
+**Example of a comprehensibility problem:**
 
 "Ambiguous progress bar: The progress bar does not have a label or any indication of what it represents, which could lead to confusion about the user's progress."
 </examples>`
@@ -490,11 +752,12 @@ Fokussiere stattdessen auf:
    */
   static createABCTestPrompt(
     appContext: AppContext,
-    variant: PromptVariant = 'extended',
+    variant: PromptVariant = 'advanced',
     includeExamples: boolean = false,
-    customPrompt?: string
+    customPrompt?: string,
+    language: 'de' | 'en' = 'de'
   ): string {
-    return this.createUsabilityPrompt(appContext, includeExamples, customPrompt, variant)
+    return this.createUsabilityPrompt(appContext, includeExamples, customPrompt, variant, language)
   }
 
   /**
@@ -506,7 +769,7 @@ Fokussiere stattdessen auf:
     includeExamples: boolean = false,
     customPrompt?: string
   ): string {
-    const variant: PromptVariant = testPure ? 'pure' : 'extended'
+    const variant: PromptVariant = testPure ? 'basic' : 'advanced'
     return this.createUsabilityPrompt(appContext, includeExamples, customPrompt, variant)
   }
 
@@ -523,11 +786,11 @@ Fokussiere stattdessen auf:
     appContext: AppContext,
     includeExamples: boolean = false,
     customPrompt?: string
-  ): { studyPure: string; pure: string; extended: string } {
+  ): { studyPure: string; basic: string; advanced: string } {
     return {
       studyPure: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'study-pure'),
-      pure: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'pure'),
-      extended: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'extended')
+      basic: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'basic'),
+      advanced: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'advanced')
     }
   }
 
@@ -538,10 +801,10 @@ Fokussiere stattdessen auf:
     appContext: AppContext,
     includeExamples: boolean = false,
     customPrompt?: string
-  ): { pure: string; extended: string } {
+  ): { basic: string; advanced: string } {
     return {
-      pure: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'pure'),
-      extended: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'extended')
+      basic: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'basic'),
+      advanced: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'advanced')
     }
   }
 }

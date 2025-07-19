@@ -102,8 +102,8 @@ export const errorTypes = [
  */
 export const promptStrategies = [
   'A: STUDY-PURE - Originalgetreue IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"',
-  'B: PURE - Deutsche Adaptation minimalistischer UX-LLM Ansatz (IEEE Xplore: 11029918)', 
-  'C: EXTENDED - Thesis-Level Analyse mit detaillierter Expertise-Beschreibung',
+  'B: BASIC - Deutsche Adaptation minimalistischer UX-LLM Ansatz (IEEE Xplore: 11029918)', 
+  'C: ADVANCED - Thesis-Level Analyse mit detaillierter Expertise-Beschreibung',
   'Persona-Instruktion - Rollenzuweisung als UX-Experte',
   'Strukturierte Eingabe - XML-ähnliche Tags zur Trennung vs. Originalformat',
   'Offene Problemidentifikation - Keine numerische Begrenzung',

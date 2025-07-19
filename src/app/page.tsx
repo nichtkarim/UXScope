@@ -24,12 +24,13 @@ export default function Home() {
     uiCode: '',
     userTask: '',
     customPrompt: '',
-    promptVariant: 'extended' as PromptVariant  // Default auf extended
+    promptVariant: 'advanced' as PromptVariant  // Default auf advanced
   })
   const [analysis, setAnalysis] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [activeTab, setActiveTab] = useState<'analyze' | 'history' | 'evaluation' | 'alternative' | 'methodology' | 'reflection'>('analyze')
   const [darkMode, setDarkMode] = useState(false)
+  const [promptLanguage, setPromptLanguage] = useState<'de' | 'en'>('de')
   
   // Wissenschaftliche Daten für die Bachelorarbeit
   const [llmAnalyses, setLlmAnalyses] = useState<LLMAnalysis[]>([])
@@ -69,7 +70,15 @@ export default function Home() {
     })
   }, [])
 
-
+  // Language preference aus localStorage laden
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      const savedLanguage = localStorage.getItem('promptLanguage') as 'de' | 'en'
+      if (savedLanguage) {
+        setPromptLanguage(savedLanguage)
+      }
+    })
+  }, [])
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode
@@ -137,7 +146,8 @@ export default function Home() {
             userTask: contextData.userTask || 'Allgemeine Nutzung der Anwendung',
             viewName: 'Hauptansicht',
             customPrompt: contextData.customPrompt || '',
-            promptVariant: contextData.promptVariant || 'extended'
+            promptVariant: contextData.promptVariant || 'advanced',
+            language: promptLanguage
           },
         }),
       })
@@ -201,7 +211,7 @@ export default function Home() {
   const handleReset = () => {
     setAnalysis(null)
     setUploadedImage(null)
-    setContextData({ description: '', uiCode: '', userTask: '', customPrompt: '', promptVariant: 'extended' })
+    setContextData({ description: '', uiCode: '', userTask: '', customPrompt: '', promptVariant: 'advanced' })
     setSelectedProfileId('')
     setCurrentAnalysisMetadata(null)
   }
@@ -212,11 +222,17 @@ export default function Home() {
       uiCode: '',
       userTask: '',
       customPrompt: '',
-      promptVariant: 'extended'
+      promptVariant: 'advanced'
     })
     setAnalysis(historyItem.analysis)
     setSelectedProfileId(historyItem.profileId)
     setActiveTab('analyze')
+  }
+
+  const toggleLanguage = () => {
+    const newLanguage = promptLanguage === 'de' ? 'en' : 'de'
+    setPromptLanguage(newLanguage)
+    localStorage.setItem('promptLanguage', newLanguage)
   }
 
   return (
@@ -225,13 +241,24 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
             {/* Header */}
             <header className="text-center mb-8 relative">
-              <button
-                onClick={toggleDarkMode}
-                className="absolute top-0 right-0 p-2 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
-                title={darkMode ? 'Light Mode' : 'Dark Mode'}
-              >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
+              <div className="absolute top-0 right-0 flex gap-2">
+                <button
+                  onClick={toggleLanguage}
+                  className="p-2 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+                  title={`Prompt-Sprache: ${promptLanguage === 'de' ? 'Deutsch' : 'English'} (klicken zum Wechseln)`}
+                >
+                  <span className="text-xs font-medium">
+                    Prompts: {promptLanguage.toUpperCase()}
+                  </span>
+                </button>
+                <button
+                  onClick={toggleDarkMode}
+                  className="p-2 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+                  title={darkMode ? 'Light Mode' : 'Dark Mode'}
+                >
+                  {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </button>
+              </div>
               <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
                 LLM-basierte Usability-Evaluation
               </h1>

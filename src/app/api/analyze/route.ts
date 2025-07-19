@@ -10,11 +10,13 @@ export async function POST(request: Request) {
       userProfile
     } = await request.json()
     
-    // Extrahiere promptVariant aus context, falls vorhanden
-    const promptVariant = context?.promptVariant || 'extended'
+    // Extrahiere promptVariant und promptLanguage aus context, falls vorhanden
+    const promptVariant = context?.promptVariant || 'advanced'
+    const promptLanguage = context?.language || 'de'
     
     console.log('🔍 Debug - Received context:', context)
     console.log('🔍 Debug - Extracted promptVariant:', promptVariant)
+    console.log('🔍 Debug - Extracted promptLanguage:', promptLanguage)
     
     // Validierung
     if (!image && !context) {
@@ -65,12 +67,13 @@ export async function POST(request: Request) {
       viewName: context?.viewName || 'Hauptansicht'
     }
 
-    // Prompt generieren mit der korrekten Variante
+    // Prompt generieren mit der korrekten Variante und Sprache
     const prompt = PromptEngineer.createUsabilityPrompt(
       appContext, 
       true, 
       context?.customPrompt, 
-      promptVariant
+      promptVariant,
+      promptLanguage
     )
     
     console.log('🔍 API Debug - Generated prompt length:', prompt.length)

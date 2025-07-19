@@ -7,3 +7,9 @@ Dieses Projekt ist eine Next.js-Anwendung zur Durchführung von Usability-Analys
 Die Anwendung wird über GitHub Pages bereitgestellt.
 
 **[Hier geht's zur Live-Anwendung](https://nichtkarim.github.io/Bachelorprojekt/)**
+
+## Installation
+
+1. Repository klonen:
+   ```bash
+   git clone

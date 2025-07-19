@@ -34,7 +34,7 @@ interface ParsedSection {
   textPosition?: number
 }
 
-export default function UsabilityAnalysis({ analysis, isAnalyzing, onReset, promptVariant = 'extended', promptUsed, metadata }: UsabilityAnalysisProps) {
+export default function UsabilityAnalysis({ analysis, isAnalyzing, onReset, promptVariant = 'advanced', promptUsed, metadata }: UsabilityAnalysisProps) {
   
   // Bestimme die tatsächliche Prompt-Variante (Vorrang: Metadata)
   const variant = metadata?.promptVariant ?? promptVariant
@@ -80,7 +80,7 @@ ${analysis}
 Erstellt mit Usability Tester - LLM-basierte Usability-Evaluation
 ${variant === 'study-pure'
   ? 'Basierend auf der originalen IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"'
-  : variant === 'extended' 
+  : variant === 'advanced' 
     ? 'Basierend auf Nielsen\'s Heuristiken, ISO 9241-11 und WCAG 2.1' 
     : 'Basierend auf der UX-LLM Studie (IEEE Xplore: 11029918)'
 }
@@ -463,12 +463,12 @@ ${variant === 'study-pure'
               LLM-Analyse läuft...
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
-              {variant === 'extended' 
+              {variant === 'advanced' 
                 ? 'Das Large Language Model analysiert Ihre Anwendung nach wissenschaftlichen Usability-Kriterien:' 
                 : 'Das Large Language Model analysiert Ihre Anwendung nach Usability-Kriterien.'
               }
             </p>
-            {variant === 'extended' && (
+            {variant === 'advanced' && (
               <div className="mt-4 flex flex-wrap gap-2 justify-center">
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
                   <Eye className="h-3 w-3 mr-1" />
@@ -502,13 +502,13 @@ ${variant === 'study-pure'
               </div>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Bereit für{variant === 'extended' ? ' wissenschaftliche' : ''} Usability-Analyse
+              Bereit für{variant === 'advanced' ? ' wissenschaftliche' : ''} Usability-Analyse
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mb-6">
               Laden Sie einen Screenshot hoch, füllen Sie die Kontextfelder aus und 
               wählen Sie ein Profil mit LLM-Integration, um eine detaillierte Analyse zu erhalten.
             </p>
-            {variant === 'extended' && (
+            {variant === 'advanced' && (
               <div className="flex flex-wrap gap-2 justify-center">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
                   <BookOpen className="h-3 w-3 mr-1" />
@@ -648,14 +648,14 @@ ${variant === 'study-pure'
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {variant === 'study-pure' 
                     ? 'Study-Pure (A)' 
-                    : variant === 'pure' 
-                      ? 'Pure (B)' 
-                      : 'Extended (C)'}
+                    : variant === 'basic' 
+                      ? 'Basic (B)' 
+                      : 'Advanced (C)'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-500">
                   {variant === 'study-pure'
                     ? 'Originalgetreue IEEE-Studie'
-                    : variant === 'pure'
+                    : variant === 'basic'
                       ? 'Deutsche Adaptation (UX-LLM Studie)'
                       : 'Umfassende Analyse mit Nielsen\'s Heuristiken'}
                 </p>
@@ -724,7 +724,7 @@ ${variant === 'study-pure'
                 
                 <div className="text-xs text-gray-500 dark:text-gray-400">
                   <p><strong>Wissenschaftlicher Hinweis:</strong> 
-                    {variant === 'pure' 
+                    {variant === 'basic' 
                       ? 'Dieser Prompt wurde basierend auf der UX-LLM Studie (IEEE Xplore: 11029918) entwickelt und folgt der minimalistischen, studienkonformen Methodik für offene Problemidentifikation.' 
                       : 'Dieser Prompt wurde basierend auf der UX-LLM Studie (IEEE Xplore: 11029918) entwickelt und integriert etablierte UX-Prinzipien wie Nielsen\'s Heuristiken und ISO 9241-110 Dialogprinzipien.'
                     }
@@ -741,7 +741,7 @@ ${variant === 'study-pure'
                   <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
                     <p><strong>Struktur:</strong> System-Prompt → Strukturierte Eingabe → Anweisungen → Custom Prompts</p>
                     <p><strong>Wissenschaftliche Basis:</strong> 
-                      {variant === 'pure' 
+                      {variant === 'basic' 
                         ? 'UX-LLM Studie (IEEE Xplore: 11029918) - Minimalistischer Ansatz' 
                         : 'UX-LLM Studie, Nielsen\'s Heuristiken, ISO 9241-110'
                       }

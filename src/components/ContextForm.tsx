@@ -209,65 +209,65 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
             </p>
             <ul className="text-xs text-gray-500 dark:text-gray-500 space-y-1">
               <li>• Exakte Replikation der Originalstudie</li>
-              <li>• Englischsprachige Prompts</li>
+              <li>• Sprache via Toggle wählbar (DE/EN)</li>
               <li>• Direkte Vergleichbarkeit</li>
               <li>• Minimale Instruktionen</li>
             </ul>
           </div>
 
-          {/* PURE Variante (B) */}
+          {/* BASIC Variante (B) */}
           <div 
             className={`relative rounded-lg border-2 p-4 cursor-pointer transition-all ${
-              contextData.promptVariant === 'pure' 
+              contextData.promptVariant === 'basic' 
                 ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
                 : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-green-400'
             }`}
-            onClick={() => handlePromptVariantChange('pure')}
+            onClick={() => handlePromptVariantChange('basic')}
           >
             <div className="flex items-center gap-2 mb-2">
               <input
                 type="radio"
                 name="promptVariant"
-                value="pure"
-                checked={contextData.promptVariant === 'pure'}
-                onChange={() => handlePromptVariantChange('pure')}
+                value="basic"
+                checked={contextData.promptVariant === 'basic'}
+                onChange={() => handlePromptVariantChange('basic')}
                 className="text-green-600 focus:ring-green-500"
               />
               <label className="font-medium text-gray-900 dark:text-white">
-                PURE (B)
+                BASIC (B)
               </label>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Deutsche Adaptation des minimalistischen Ansatzes
+              Minimalistischer Ansatz mit grundlegenden Instruktionen
             </p>
             <ul className="text-xs text-gray-500 dark:text-gray-500 space-y-1">
               <li>• Kurze, prägnante Instruktionen</li>
               <li>• Offene Problemidentifikation</li>
-              <li>• Deutsche Übersetzung</li>
+              <li>• Sprache via Toggle wählbar (DE/EN)</li>
               <li>• Strukturierte XML-Eingabe</li>
             </ul>
           </div>
 
-          {/* EXTENDED Variante (C) */}
+          {/* ADVANCED Variante (C) */}
           <div 
             className={`relative rounded-lg border-2 p-4 cursor-pointer transition-all ${
-              contextData.promptVariant === 'extended' 
+              contextData.promptVariant === 'advanced' 
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
                 : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-blue-400'
             }`}
-            onClick={() => handlePromptVariantChange('extended')}
+            onClick={() => handlePromptVariantChange('advanced')}
           >
             <div className="flex items-center gap-2 mb-2">
               <input
                 type="radio"
                 name="promptVariant"
-                value="extended"
-                checked={contextData.promptVariant === 'extended'}
-                onChange={() => handlePromptVariantChange('extended')}
+                value="advanced"
+                checked={contextData.promptVariant === 'advanced'}
+                onChange={() => handlePromptVariantChange('advanced')}
                 className="text-blue-600 focus:ring-blue-500"
               />
               <label className="font-medium text-gray-900 dark:text-white">
-                EXTENDED (C)
+                ADVANCED (C)
               </label>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
@@ -278,23 +278,32 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
               <li>• Wissenschaftliche Analysemethodik</li>
               <li>• Umfassende Qualitätskriterien</li>
               <li>• Nielsen-Heuristiken Integration</li>
+              <li>• Sprache via Toggle wählbar (DE/EN)</li>
             </ul>
           </div>
         </div>
-        <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <div className="flex items-start gap-2">
-            <Target className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-            <div className="text-xs text-yellow-700 dark:text-yellow-300">
-              <p className="font-medium mb-1">A/B/C Analysemethoden-Vergleich:</p>
-              <p>Diese Einstellung ermöglicht den Vergleich zwischen drei wissenschaftlich fundierten Analysemethoden. 
-                 Testen Sie alle Varianten mit identischen Eingaben, um die Unterschiede zu verstehen und empirische Daten für Ihre Forschung zu sammeln.</p>
+        <div className="mt-2 space-y-2">
+          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Target className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-yellow-700 dark:text-yellow-300">
+                <p className="font-medium mb-1">A/B/C Analysemethoden-Vergleich:</p>
+                <p>Diese Einstellung ermöglicht den Vergleich zwischen drei wissenschaftlich fundierten Analysemethoden. 
+                   Testen Sie alle Varianten mit identischen Eingaben, um die Unterschiede zu verstehen und empirische Daten für Ihre Forschung zu sammeln.</p>
+              </div>
             </div>
+          </div>
+          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              💡 <strong>Sprach-Toggle:</strong> Der Sprachschalter (DE/EN) in der Kopfzeile steuert die Sprache aller generierten Prompts. 
+              Die Benutzeroberfläche bleibt auf Deutsch. Alle drei Varianten sind vollständig in beiden Sprachen verfügbar.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Guidelines Info - nur bei Extended Variante anzeigen */}
-      {contextData.promptVariant === 'extended' && (
+      {/* Guidelines Info - nur bei Advanced Variante anzeigen */}
+      {contextData.promptVariant === 'advanced' && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <h4 className="font-medium text-gray-900 dark:text-white mb-2">Bewertungskriterien</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">

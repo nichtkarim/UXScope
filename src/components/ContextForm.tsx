@@ -1,7 +1,7 @@
 'use client'
 
 import { FileText, Code, Target, Brain } from 'lucide-react'
-import { PromptVariant } from '@/lib/promptEngineering'
+import { PromptVariant, UITechnologyMode } from '@/lib/promptEngineering'
 
 interface ContextData {
   description: string
@@ -9,6 +9,7 @@ interface ContextData {
   userTask: string
   customPrompt: string
   promptVariant: PromptVariant  // Verwendung des importierten Types
+  uiMode: UITechnologyMode     // Neuer UI-Modus
 }
 
 interface ContextFormProps {
@@ -49,6 +50,13 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
     onContextChange({
       ...contextData,
       promptVariant: variant
+    })
+  }
+
+  const handleUIModeChange = (uiMode: UITechnologyMode) => {
+    onContextChange({
+      ...contextData,
+      uiMode: uiMode
     })
   }
 
@@ -282,6 +290,56 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
             </ul>
           </div>
         </div>
+        
+        {/* UI Technology Mode Selection - nur bei STUDY-PURE anzeigen */}
+        {contextData.promptVariant === 'study-pure' && (
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Brain className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
+                Analysemodus
+              </label>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={contextData.uiMode === 'generalized'}
+                  onChange={(e) => handleUIModeChange(e.target.checked ? 'generalized' : 'swiftui-only')}
+                  className="sr-only"
+                />
+                <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  contextData.uiMode === 'generalized' 
+                    ? 'bg-purple-600' 
+                    : 'bg-gray-300 dark:bg-gray-600'
+                }`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    contextData.uiMode === 'generalized' ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </div>
+                <span className="ml-3 text-sm font-medium text-gray-900 dark:text-white">
+                  Technologieunabhängige Analyse
+                </span>
+              </label>
+            </div>
+            <div className="mt-2">
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="text-xs text-blue-700 dark:text-blue-300">
+                  <p className="font-medium mb-1">
+                    {contextData.uiMode === 'generalized' ? '✓ Technologieunabhängig' : '✓ SwiftUI-spezifisch (Original)'}
+                  </p>
+                  <p>
+                    {contextData.uiMode === 'generalized' 
+                      ? 'Das LLM wird als Experte für verschiedene UI-Technologien (SwiftUI, React, Flutter, HTML/CSS) eingesetzt. Erweiterte Anwendbarkeit für moderne Multi-Platform-Entwicklung.'
+                      : 'Exakte Replikation der ursprünglichen Forschungsstudie mit Fokus auf iOS/SwiftUI-Apps. Direkte Vergleichbarkeit mit publizierten Ergebnissen.'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="mt-2 space-y-2">
           <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <div className="flex items-start gap-2">
@@ -293,12 +351,7 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
               </div>
             </div>
           </div>
-          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <p className="text-xs text-blue-700 dark:text-blue-300">
-              💡 <strong>Sprach-Toggle:</strong> Der Sprachschalter (DE/EN) in der Kopfzeile steuert die Sprache aller generierten Prompts. 
-              Die Benutzeroberfläche bleibt auf Deutsch. Alle drei Varianten sind vollständig in beiden Sprachen verfügbar.
-            </p>
-          </div>
+
         </div>
       </div>
 

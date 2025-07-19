@@ -13,35 +13,57 @@ import { AppContext } from '@/types'
  */
 export type PromptVariant = 'study-pure' | 'basic' | 'advanced';
 
+export type UITechnologyMode = 'swiftui-only' | 'generalized'
+
+export interface PromptConfig {
+  variant: PromptVariant
+  language: 'de' | 'en'
+  uiMode: UITechnologyMode
+  includeExamples: boolean
+}
+
 export class PromptEngineer {
   /**
-   * A/B/C Testing Konfiguration für Prompt-Varianten
+   * A/B/C Testing Konfiguration für Prompt-Varianten mit UI-Technologie-Modi
    * 
    * FORSCHUNGS-HINWEIS:
-   * Diese Implementierung ermöglicht das Testen dreier wissenschaftlich fundierter Prompt-Ansätze:
+   * Diese Implementierung ermöglicht das Testen dreier wissenschaftlich fundierter Prompt-Ansätze
+   * mit zusätzlicher Wahl zwischen originalgetreuer SwiftUI-Fokussierung und generalisierter UI-Bewertung:
    * 
    * A. "STUDY-PURE" - Originale IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"
-   *    - Exakte Replikation der Originalstudie
-   *    - Englischsprachige Prompts wie in der Forschung
+   *    SwiftUI-Only Modus:
+   *    - Exakte Replikation der Originalstudie (Prof. Femmer Empfehlung)
+   *    - Nur für iOS/SwiftUI-Apps (wie in der ursprünglichen Forschung)
    *    - Direkte Vergleichbarkeit mit publizierten Ergebnissen
-   *    - Minimale Instruktionen ohne zusätzliche Strukturierung
+   *    - Methodisch konsistent und wissenschaftlich fundiert
+   *    
+   *    Generalisierter Modus:
+   *    - Systemübergreifendes Know-how zur UI-Bewertung
+   *    - Verschiedene UI-Technologien (SwiftUI, React, Flutter, HTML/CSS)
+   *    - Erweiterte Anwendbarkeit für moderne Forschungsrichtungen
+   *    - Unterstellt dem LLM breitere UI-Expertise
    * 
    * B. "BASIC" - Adaptierte Version basierend auf UX-LLM Studie (IEEE Xplore: 11029918)
-   *    - Deutsche Übersetzung des minimalistischen Ansatzes
+   *    - Minimalistischer Ansatz mit einfacher Kategorisierung
    *    - Kurze, prägnante Instruktionen
    *    - Fokus auf offene Problemidentifikation
-   *    - Keine detaillierten Kategorien oder Frameworks
+   *    - Sprache wählbar (DE/EN)
    * 
    * C. "ADVANCED" - Erweiterte Variante für Thesis-Level Analyse
-   *    - Detaillierte Expertise-Beschreibung
-   *    - Strukturierte Problemkategorien
-   *    - Wissenschaftliche Analysemethodik
-   *    - Umfassende Qualitätskriterien
+   *    - Detaillierte Expertise-Beschreibung mit wissenschaftlicher Kategorisierung
+   *    - Strukturierte Problemkategorien basierend auf Usability-Test-Ergebnissen
+   *    - Wissenschaftliche Analysemethodik mit Nielsen's Heuristiken
+   *    - Umfassende Qualitätskriterien und ISO-Standards
+   * 
+   * UI-TECHNOLOGIE-MODI:
+   * - 'swiftui-only': Originalgetreu für direkte Studienreplikation (empfohlen für STUDY-PURE)
+   * - 'generalized': Systemübergreifend für moderne Multi-Platform-Anwendungen
    * 
    * Verwendung für A/B/C Testing:
-   * - Verwende 'STUDY-PURE' für direkte Replikation der IEEE-Studie
-   * - Verwende 'BASIC' für deutsche Adaptation der minimalistischen Methode
-   * - Verwende 'ADVANCED' für detailliertere wissenschaftliche Analyse
+   * - Verwende 'STUDY-PURE' + 'swiftui-only' für exakte IEEE-Studien-Replikation
+   * - Verwende 'STUDY-PURE' + 'generalized' für erweiterte Anwendbarkeit
+   * - Verwende 'BASIC' für vereinfachte deutsche/englische Evaluation
+   * - Verwende 'ADVANCED' für detaillierte wissenschaftliche Thesis-Analyse
    * - Dokumentiere Ergebnisse aller Varianten für empirische Auswertung
    */
   static readonly PROMPT_VARIANTS = {
@@ -59,24 +81,26 @@ export class PromptEngineer {
    * @param customPrompt - Benutzerdefinierte Zusatzanweisungen
    * @param variant - Prompt-Variante für A/B/C Testing ('study-pure', 'basic' oder 'advanced')
    * @param language - Sprache der Prompts ('de' für Deutsch, 'en' für Englisch)
+   * @param uiMode - 'swiftui-only' für originalgetreue Studie oder 'generalized' für verschiedene UI-Technologien
    */
   static createUsabilityPrompt(
     appContext: AppContext, 
     includeExamples: boolean = false, 
     customPrompt?: string,
     variant: PromptVariant = 'advanced',
-    language: 'de' | 'en' = 'de'
+    language: 'de' | 'en' = 'de',
+    uiMode: UITechnologyMode = 'generalized'
   ): string {
-    console.log('🔍 PromptEngineer Debug - Creating prompt with variant:', variant)
+    console.log('🔍 PromptEngineer Debug - Creating prompt with variant:', variant, 'UI mode:', uiMode)
     
     // Für STUDY-PURE: Nur System-Prompt + User-Input (originalgetreu)
     if (variant === 'study-pure') {
-      const systemPrompt = this.getStudyPureSystemPrompt(language)
-      const userInput = this.formatStudyPureInput(appContext, language)
+      const systemPrompt = this.getStudyPureSystemPrompt(language, uiMode)
+      const userInput = this.formatStudyPureInput(appContext, language, uiMode)
       
       console.log('🔍 PromptEngineer Debug - STUDY-PURE: System prompt length:', systemPrompt.length)
       console.log('🔍 PromptEngineer Debug - STUDY-PURE: User input length:', userInput.length)
-      console.log('🔍 PromptEngineer Debug - STUDY-PURE: Language:', language)
+      console.log('🔍 PromptEngineer Debug - STUDY-PURE: Language:', language, 'UI Mode:', uiMode)
       
       // Für STUDY-PURE werden keine Custom-Prompts, Beispiele oder zusätzliche Instruktionen verwendet
       // um die Originalität der IEEE-Studie zu bewahren
@@ -148,12 +172,16 @@ Integriere diese Anforderungen in deine Analyse und gehe besonders auf diese Asp
    * STUDY-PURE System-Prompt basierend auf IEEE-Studie "Does GenAI Make Usability Testing Obsolete?"
    * Originalgetreue Replikation der in der Studie verwendeten Prompts (auf Englisch)
    * Jetzt auch mit deutscher Übersetzung verfügbar
+   * 
+   * @param language - Sprache des Prompts
+   * @param uiMode - 'swiftui-only' für originalgetreue Studie oder 'generalized' für verschiedene UI-Technologien
    */
-  private static getStudyPureSystemPrompt(language: 'de' | 'en' = 'en'): string {
+  private static getStudyPureSystemPrompt(language: 'de' | 'en' = 'en', uiMode: UITechnologyMode = 'swiftui-only'): string {
     if (language === 'de') {
-      return `Du bist ein UX-Experte für mobile Apps.
+      if (uiMode === 'swiftui-only') {
+        return `Du bist ein UX-Experte für mobile iOS-Apps mit SwiftUI.
 Deine Aufgabe ist es, Usability-Probleme anhand der 
-Informationen zu identifizieren, die du über eine App-Ansicht erhältst.
+Informationen zu identifizieren, die du über eine SwiftUI-App-Ansicht erhältst.
 Ein Beispiel für ein Usability-Problem könnte sein: 'Fehlendes
 visuelles Feedback bei Nutzerinteraktionen'.
 Antworte in der Sprache der App-Domäne; du darfst keine
@@ -161,11 +189,26 @@ technische Terminologie verwenden oder Code-Details erwähnen.
 Zähle die identifizierten Probleme auf; füge nach jeder 
 Aufzählung einen leeren Absatz hinzu; kein vorangestellter
 oder nachfolgender Text.`
+      } else {
+        return `Du bist ein UX-Experte für mobile Apps und Webanwendungen.
+Deine Aufgabe ist es, Usability-Probleme anhand der 
+Informationen zu identifizieren, die du über eine App-Ansicht erhältst.
+Du verfügst über systemübergreifendes Know-how zur UI-Bewertung 
+für verschiedene Technologien (SwiftUI, React, Flutter, etc.).
+Ein Beispiel für ein Usability-Problem könnte sein: 'Fehlendes
+visuelles Feedback bei Nutzerinteraktionen'.
+Antworte in der Sprache der App-Domäne; du darfst keine
+technische Terminologie verwenden oder Code-Details erwähnen.
+Zähle die identifizierten Probleme auf; füge nach jeder 
+Aufzählung einen leeren Absatz hinzu; kein vorangestellter
+oder nachfolgender Text.`
+      }
     }
     
-    return `You are a UX expert for mobile apps.
+    if (uiMode === 'swiftui-only') {
+      return `You are a UX expert for mobile iOS apps with SwiftUI.
 Your task is to identify usability issues with the
-information you get for an app's view.
+information you get for a SwiftUI app's view.
 An example of a usability issue could be: 'Lack of
 visual feedback on user interactions'.
 Respond using app domain language; you must not use
@@ -173,6 +216,20 @@ technical terminology or mention code details.
 Enumerate the problems identified; add an empty
 paragraph after each enumeration; no preceding
 or following text.`
+    } else {
+      return `You are a UX expert for mobile apps and web applications.
+Your task is to identify usability issues with the
+information you get for an app's view.
+You have cross-platform expertise in UI evaluation 
+for various technologies (SwiftUI, React, Flutter, etc.).
+An example of a usability issue could be: 'Lack of
+visual feedback on user interactions'.
+Respond using app domain language; you must not use
+technical terminology or mention code details.
+Enumerate the problems identified; add an empty
+paragraph after each enumeration; no preceding
+or following text.`
+    }
   }
 
   /**
@@ -641,11 +698,16 @@ ${appContext.sourceCode}
 
   /**
    * Formatiert die Eingabe im originalen IEEE-Studien-Format
-   * Jetzt auch mit deutscher Übersetzung verfügbar
+   * Jetzt auch mit deutscher Übersetzung und UI-Modus verfügbar
+   * 
+   * @param appContext - Der App-Kontext
+   * @param language - Sprache des Inputs
+   * @param uiMode - 'swiftui-only' für originalgetreue Studie oder 'generalized' für verschiedene UI-Technologien
    */
-  private static formatStudyPureInput(appContext: AppContext, language: 'de' | 'en' = 'en'): string {
+  private static formatStudyPureInput(appContext: AppContext, language: 'de' | 'en' = 'en', uiMode: UITechnologyMode = 'swiftui-only'): string {
     if (language === 'de') {
-      return `Ich habe eine iOS-App über: ${appContext.appDescription}
+      if (uiMode === 'swiftui-only') {
+        return `Ich habe eine iOS-App über: ${appContext.appDescription}
 Die Aufgabe des Nutzers in dieser App-Ansicht handelt von: ${appContext.userTask}.
 Ein Bild der App-Ansicht wird bereitgestellt.
 Unten ist der unvollständige SwiftUI-Code für die App-
@@ -656,9 +718,20 @@ Er kann auch zusätzliche Komponenten wie
 Unteransichten, Modelle oder Vorschau-Code enthalten.
 Quellcode:
 ${appContext.sourceCode || '[Kein Quellcode bereitgestellt]'}`
+      } else {
+        return `Ich habe eine Anwendung über: ${appContext.appDescription}
+Die Aufgabe des Nutzers in dieser Ansicht handelt von: ${appContext.userTask}.
+Ein Bild der Anwendung wird bereitgestellt.
+Unten ist der Quellcode für die Ansicht (falls verfügbar).
+Dieser Code kann verschiedene UI-Technologien verwenden 
+(SwiftUI, React, HTML/CSS, Flutter, etc.).
+Quellcode:
+${appContext.sourceCode || '[Kein Quellcode bereitgestellt]'}`
+      }
     }
     
-    return `I have an iOS app about: ${appContext.appDescription}
+    if (uiMode === 'swiftui-only') {
+      return `I have an iOS app about: ${appContext.appDescription}
 The user's task in this app view is about: ${appContext.userTask}.
 An image of the app view is provided.
 Below is the incomplete SwiftUI code for the app
@@ -669,6 +742,16 @@ It may also include additional components like
 subviews, models, or preview code.
 Source Code:
 ${appContext.sourceCode || '[No source code provided]'}`
+    } else {
+      return `I have an application about: ${appContext.appDescription}
+The user's task in this view is about: ${appContext.userTask}.
+An image of the application is provided.
+Below is the source code for the view (if available).
+This code may use various UI technologies 
+(SwiftUI, React, HTML/CSS, Flutter, etc.).
+Source Code:
+${appContext.sourceCode || '[No source code provided]'}`
+    }
   }
 
   /**
@@ -770,6 +853,8 @@ Fokussiere stattdessen auf:
    * @param variant - Welche Variante verwendet werden soll
    * @param includeExamples - Ob Beispiele inkludiert werden sollen
    * @param customPrompt - Optionale benutzerdefinierte Zusatzanweisungen
+   * @param language - Sprache der Prompts
+   * @param uiMode - UI-Technologie-Modus
    * @returns Strukturierter Prompt für die gewählte Variante
    */
   static createABCTestPrompt(
@@ -777,9 +862,10 @@ Fokussiere stattdessen auf:
     variant: PromptVariant = 'advanced',
     includeExamples: boolean = false,
     customPrompt?: string,
-    language: 'de' | 'en' = 'de'
+    language: 'de' | 'en' = 'de',
+    uiMode: UITechnologyMode = 'generalized'
   ): string {
-    return this.createUsabilityPrompt(appContext, includeExamples, customPrompt, variant, language)
+    return this.createUsabilityPrompt(appContext, includeExamples, customPrompt, variant, language, uiMode)
   }
 
   /**
@@ -789,10 +875,12 @@ Fokussiere stattdessen auf:
     appContext: AppContext,
     testPure: boolean = false,
     includeExamples: boolean = false,
-    customPrompt?: string
+    customPrompt?: string,
+    language: 'de' | 'en' = 'de',
+    uiMode: UITechnologyMode = 'generalized'
   ): string {
     const variant: PromptVariant = testPure ? 'basic' : 'advanced'
-    return this.createUsabilityPrompt(appContext, includeExamples, customPrompt, variant)
+    return this.createUsabilityPrompt(appContext, includeExamples, customPrompt, variant, language, uiMode)
   }
 
   /**
@@ -802,17 +890,21 @@ Fokussiere stattdessen auf:
    * @param appContext - App-Kontext für die Analyse
    * @param includeExamples - Ob Beispiele inkludiert werden sollen
    * @param customPrompt - Optionale benutzerdefinierte Zusatzanweisungen
+   * @param language - Sprache der Prompts
+   * @param uiMode - UI-Technologie-Modus
    * @returns Objekt mit allen drei Prompt-Varianten
    */
   static createAllVariants(
     appContext: AppContext,
     includeExamples: boolean = false,
-    customPrompt?: string
+    customPrompt?: string,
+    language: 'de' | 'en' = 'de',
+    uiMode: UITechnologyMode = 'generalized'
   ): { studyPure: string; basic: string; advanced: string } {
     return {
-      studyPure: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'study-pure'),
-      basic: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'basic'),
-      advanced: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'advanced')
+      studyPure: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'study-pure', language, uiMode),
+      basic: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'basic', language, uiMode),
+      advanced: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'advanced', language, uiMode)
     }
   }
 
@@ -822,11 +914,13 @@ Fokussiere stattdessen auf:
   static createBothVariants(
     appContext: AppContext,
     includeExamples: boolean = false,
-    customPrompt?: string
+    customPrompt?: string,
+    language: 'de' | 'en' = 'de',
+    uiMode: UITechnologyMode = 'generalized'
   ): { basic: string; advanced: string } {
     return {
-      basic: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'basic'),
-      advanced: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'advanced')
+      basic: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'basic', language, uiMode),
+      advanced: this.createUsabilityPrompt(appContext, includeExamples, customPrompt, 'advanced', language, uiMode)
     }
   }
 }

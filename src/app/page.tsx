@@ -24,7 +24,8 @@ export default function Home() {
     uiCode: '',
     userTask: '',
     customPrompt: '',
-    promptVariant: 'advanced' as PromptVariant  // Default auf advanced
+    promptVariant: 'advanced' as PromptVariant,  // Default auf advanced
+    uiMode: 'generalized' as 'swiftui-only' | 'generalized'  // Default auf generalized
   })
   const [analysis, setAnalysis] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -147,7 +148,8 @@ export default function Home() {
             viewName: 'Hauptansicht',
             customPrompt: contextData.customPrompt || '',
             promptVariant: contextData.promptVariant || 'advanced',
-            language: promptLanguage
+            language: promptLanguage,
+            uiMode: contextData.uiMode || 'generalized'
           },
         }),
       })
@@ -211,7 +213,7 @@ export default function Home() {
   const handleReset = () => {
     setAnalysis(null)
     setUploadedImage(null)
-    setContextData({ description: '', uiCode: '', userTask: '', customPrompt: '', promptVariant: 'advanced' })
+    setContextData({ description: '', uiCode: '', userTask: '', customPrompt: '', promptVariant: 'advanced', uiMode: 'generalized' })
     setSelectedProfileId('')
     setCurrentAnalysisMetadata(null)
   }
@@ -222,7 +224,8 @@ export default function Home() {
       uiCode: '',
       userTask: '',
       customPrompt: '',
-      promptVariant: 'advanced'
+      promptVariant: 'advanced',
+      uiMode: 'generalized'
     })
     setAnalysis(historyItem.analysis)
     setSelectedProfileId(historyItem.profileId)
@@ -269,6 +272,16 @@ export default function Home() {
                 Bachelorarbeit: Vergleich von GPT-4o, Claude 4 und Llama 3
               </div>
             </header>
+
+          {/* Sprach-Toggle Hinweis */}
+          <div className="mb-6 flex justify-center">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 max-w-4xl">
+              <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
+                💡 <strong>Sprach-Toggle:</strong> Der Sprachschalter (DE/EN) in der Kopfzeile steuert die Sprache aller generierten Prompts. 
+                Die Benutzeroberfläche bleibt auf Deutsch. Alle drei Varianten sind vollständig in beiden Sprachen verfügbar.
+              </p>
+            </div>
+          </div>
 
           {/* Tab Navigation */}
           <nav className="flex justify-center mb-8">

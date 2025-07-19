@@ -64,6 +64,53 @@ export default function UsabilityAnalysis({ analysis, isAnalyzing, onReset, prom
     setActiveTooltip(null)
   }
   
+  // Funktion zum Parsen von STUDY-PURE Befunden
+  const parseStudyPureFindings = (text: string): string[] => {
+    if (!text) return []
+    
+    // Teile den Text in logische Absätze auf
+    let findings = text
+      .split(/\n\s*\n|\r\n\s*\r\n/) // Split by double line breaks
+      .filter(paragraph => paragraph.trim().length > 20) // Filter out very short paragraphs
+      .map(paragraph => paragraph.trim())
+    
+    // Falls keine natürlichen Absätze vorhanden sind, versuche andere Methoden
+    if (findings.length <= 1) {
+      // Versuche aufgrund von Satzzeichen zu trennen
+      const sentences = text.split(/(?<=[.!?])\s+(?=[A-ZÄÖÜ])/)
+      const groupedSentences: string[] = []
+      let currentGroup = ""
+      
+      sentences.forEach((sentence, index) => {
+        const isNewFindingStart = sentence.match(/^(Das\s|Die\s|Der\s|Ein\s|Eine\s|Es\s|Problem|Nutzer|Benutzer|Button|Text|Farbe|Layout)/i)
+        
+        // Starte neue Gruppe wenn wir einen neuen Befund erkennen und die aktuelle Gruppe ausreichend lang ist
+        if (isNewFindingStart && currentGroup.length > 60) {
+          if (currentGroup.trim()) {
+            groupedSentences.push(currentGroup.trim())
+            currentGroup = sentence
+          }
+        } else {
+          currentGroup += (currentGroup ? " " : "") + sentence
+        }
+        
+        // Füge die letzte Gruppe hinzu
+        if (index === sentences.length - 1 && currentGroup.trim()) {
+          groupedSentences.push(currentGroup.trim())
+        }
+      })
+      
+      findings = groupedSentences.filter(group => group.length > 20)
+    }
+    
+    // Falls immer noch zu wenige Befunde, verwende den gesamten Text als einen Befund
+    if (findings.length === 0 && text.trim().length > 0) {
+      findings = [text.trim()]
+    }
+    
+    return findings
+  }
+  
   const exportReport = () => {
     if (!analysis) return
     
@@ -104,9 +151,19 @@ ${variant === 'study-pure'
   }
 
   // Function to highlight and scroll to a specific text section
-  const highlightTextSection = (section: ParsedSection) => {
-    if (section.textPosition !== undefined) {
-      setHighlightedSection(section.content[0])
+  const highlightTextSection = (section: ParsedSection | string) => {
+    let textToHighlight: string
+    
+    if (typeof section === 'string') {
+      textToHighlight = section
+    } else if (section.textPosition !== undefined) {
+      textToHighlight = section.content[0]
+    } else {
+      textToHighlight = section.content[0]
+    }
+    
+    if (textToHighlight) {
+      setHighlightedSection(textToHighlight)
       // Scroll to the analysis result section
       const analysisElement = document.querySelector('[data-analysis-text]')
       if (analysisElement) {
@@ -770,158 +827,207 @@ ${variant === 'study-pure'
         </div>
       )}
 
-      {/* Bewertungsfelder - Separate Box */}
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden bg-white dark:bg-gray-900">
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/30 dark:to-blue-900/30 p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Bewertungsfelder
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Zusammenfassung der gefundenen Usability-Probleme
-          </p>
-        </div>
-        
-        <div className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div 
-              className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 relative cursor-help"
-              onMouseEnter={(e) => handleTooltipShow('total', e)}
-              onMouseLeave={handleTooltipHide}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Probleme gesamt</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{summary.totalProblems}</p>
+      {/* Bewertungsfelder - Separate Box - nur für BASIC und ADVANCED */}
+      {variant !== 'study-pure' && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden bg-white dark:bg-gray-900">
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/30 dark:to-blue-900/30 p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Bewertungsfelder
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Zusammenfassung der gefundenen Usability-Probleme
+            </p>
+          </div>
+          
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div 
+                className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 relative cursor-help"
+                onMouseEnter={(e) => handleTooltipShow('total', e)}
+                onMouseLeave={handleTooltipHide}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Probleme gesamt</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{summary.totalProblems}</p>
+                  </div>
+                  <AlertCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 </div>
-                <AlertCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
-            </div>
-            
-            <div 
-              className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-700 relative cursor-help"
-              onMouseEnter={(e) => handleTooltipShow('catastrophic', e)}
-              onMouseLeave={handleTooltipHide}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">Katastrophal</p>
-                  <p className="text-2xl font-bold text-red-700 dark:text-red-400">{summary.catastrophicProblems}</p>
+              
+              <div 
+                className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-700 relative cursor-help"
+                onMouseEnter={(e) => handleTooltipShow('catastrophic', e)}
+                onMouseLeave={handleTooltipHide}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">Katastrophal</p>
+                    <p className="text-2xl font-bold text-red-700 dark:text-red-400">{summary.catastrophicProblems}</p>
+                  </div>
+                  <Skull className="h-8 w-8 text-red-700" />
                 </div>
-                <Skull className="h-8 w-8 text-red-700" />
               </div>
-            </div>
-            
-            <div 
-              className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-700 relative cursor-help"
-              onMouseEnter={(e) => handleTooltipShow('critical', e)}
-              onMouseLeave={handleTooltipHide}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">Kritisch</p>
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">{summary.criticalProblems}</p>
+              
+              <div 
+                className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-700 relative cursor-help"
+                onMouseEnter={(e) => handleTooltipShow('critical', e)}
+                onMouseLeave={handleTooltipHide}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">Kritisch</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{summary.criticalProblems}</p>
+                  </div>
+                  <XCircle className="h-8 w-8 text-red-500" />
                 </div>
-                <XCircle className="h-8 w-8 text-red-500" />
               </div>
-            </div>
-            
-            <div 
-              className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-700 relative cursor-help"
-              onMouseEnter={(e) => handleTooltipShow('serious', e)}
-              onMouseLeave={handleTooltipHide}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400 mb-1">Ernst</p>
-                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{summary.seriousProblems}</p>
+              
+              <div 
+                className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-700 relative cursor-help"
+                onMouseEnter={(e) => handleTooltipShow('serious', e)}
+                onMouseLeave={handleTooltipHide}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400 mb-1">Ernst</p>
+                    <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{summary.seriousProblems}</p>
+                  </div>
+                  <AlertCircle className="h-8 w-8 text-yellow-500" />
                 </div>
-                <AlertCircle className="h-8 w-8 text-yellow-500" />
               </div>
-            </div>
-            
-            <div 
-              className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700 relative cursor-help"
-              onMouseEnter={(e) => handleTooltipShow('minor', e)}
-              onMouseLeave={handleTooltipHide}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">Gering</p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{summary.minorProblems}</p>
+              
+              <div 
+                className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700 relative cursor-help"
+                onMouseEnter={(e) => handleTooltipShow('minor', e)}
+                onMouseLeave={handleTooltipHide}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">Gering</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{summary.minorProblems}</p>
+                  </div>
+                  <AlertCircle className="h-8 w-8 text-blue-500" />
                 </div>
-                <AlertCircle className="h-8 w-8 text-blue-500" />
               </div>
-            </div>
-            
-            <div 
-              className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 border border-emerald-200 dark:border-emerald-700 relative cursor-help"
-              onMouseEnter={(e) => handleTooltipShow('positive', e)}
-              onMouseLeave={handleTooltipHide}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-1">Positiv</p>
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{summary.positiveFindings}</p>
+              
+              <div 
+                className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 border border-emerald-200 dark:border-emerald-700 relative cursor-help"
+                onMouseEnter={(e) => handleTooltipShow('positive', e)}
+                onMouseLeave={handleTooltipHide}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-1">Positiv</p>
+                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{summary.positiveFindings}</p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-emerald-500" />
                 </div>
-                <CheckCircle className="h-8 w-8 text-emerald-500" />
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Probleme im Detail - Clickable Cards */}
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Probleme im Detail
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Klicken Sie auf ein Problem, um es im Text zu markieren
-          </p>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-900 p-6">
-          <div className="space-y-3">
-            {parsedSections.filter(section => section.type !== 'summary').map((section, index) => (
-              <div key={index} className={`rounded-lg border-2 p-4 ${getSeverityColor(section.severity)} ${section.textPosition !== undefined ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
-                   onClick={() => section.textPosition !== undefined && highlightTextSection(section)}>
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 mt-1">
-                    {getSectionIcon(section.type, section.severity)}
+      {variant !== 'study-pure' && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Probleme im Detail
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Klicken Sie auf ein Problem, um es im Text zu markieren
+            </p>
+          </div>
+          
+          <div className="bg-white dark:bg-gray-900 p-6">
+            <div className="space-y-3">
+              {parsedSections.filter(section => section.type !== 'summary').map((section, index) => (
+                <div key={index} className={`rounded-lg border-2 p-4 ${getSeverityColor(section.severity)} ${section.textPosition !== undefined ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+                     onClick={() => section.textPosition !== undefined && highlightTextSection(section)}>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      {getSectionIcon(section.type, section.severity)}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {section.title}
+                        </h4>
+                        {section.severity !== 'info' && (
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getSeverityBadgeColor(section.severity)}`}>
+                            {getSeverityLabel(section.severity)}
+                          </span>
+                        )}
+                        {section.textPosition !== undefined && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 italic">
+                            (Klicken)
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">
+                        {section.content[0] && section.content[0].length > 150 
+                          ? section.content[0].substring(0, 150) + '...' 
+                          : section.content[0]}
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {section.title}
-                      </h4>
-                      {section.severity !== 'info' && (
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getSeverityBadgeColor(section.severity)}`}>
-                          {getSeverityLabel(section.severity)}
-                        </span>
-                      )}
-                      {section.textPosition !== undefined && (
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Befunde im Detail - für STUDY-PURE */}
+      {variant === 'study-pure' && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Befunde im Detail
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Klicken Sie auf einen Befund, um ihn im Text zu markieren
+            </p>
+          </div>
+          
+          <div className="bg-white dark:bg-gray-900 p-6">
+            <div className="space-y-3">
+              {parseStudyPureFindings(analysis).map((finding, index) => (
+                <div key={index} className="rounded-lg border p-4 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
+                     onClick={() => highlightTextSection(finding)}>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <AlertCircle className="h-5 w-5 text-gray-500" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Befund {index + 1}
+                        </h4>
                         <span className="text-xs text-gray-500 dark:text-gray-400 italic">
                           (Klicken)
                         </span>
-                      )}
-                    </div>
-                    
-                    <div className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">
-                      {section.content[0] && section.content[0].length > 150 
-                        ? section.content[0].substring(0, 150) + '...' 
-                        : section.content[0]}
+                      </div>
+                      
+                      <div className="text-sm text-gray-700 dark:text-gray-300">
+                        {finding.length > 150 ? finding.substring(0, 150) + '...' : finding}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Detaillierte Analyse */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">

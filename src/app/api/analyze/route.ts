@@ -10,13 +10,15 @@ export async function POST(request: Request) {
       userProfile
     } = await request.json()
     
-    // Extrahiere promptVariant und promptLanguage aus context, falls vorhanden
+    // Extrahiere promptVariant, promptLanguage und uiMode aus context, falls vorhanden
     const promptVariant = context?.promptVariant || 'advanced'
     const promptLanguage = context?.language || 'de'
+    const uiMode = context?.uiMode || 'generalized'
     
     console.log('🔍 Debug - Received context:', context)
     console.log('🔍 Debug - Extracted promptVariant:', promptVariant)
     console.log('🔍 Debug - Extracted promptLanguage:', promptLanguage)
+    console.log('🔍 Debug - Extracted uiMode:', uiMode)
     
     // Validierung
     if (!image && !context) {
@@ -64,16 +66,18 @@ export async function POST(request: Request) {
       appDescription: context?.description || 'Unbekannte Anwendung',
       userTask: context?.userTask || 'Allgemeine Usability-Evaluation',
       screenshot: image || '',
-      viewName: context?.viewName || 'Hauptansicht'
+      viewName: context?.viewName || 'Hauptansicht',
+      sourceCode: context?.uiCode || ''
     }
 
-    // Prompt generieren mit der korrekten Variante und Sprache
+    // Prompt generieren mit der korrekten Variante, Sprache und UI-Modus
     const prompt = PromptEngineer.createUsabilityPrompt(
       appContext, 
       true, 
       context?.customPrompt, 
       promptVariant,
-      promptLanguage
+      promptLanguage,
+      uiMode
     )
     
     console.log('🔍 API Debug - Generated prompt length:', prompt.length)

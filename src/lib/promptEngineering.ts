@@ -397,12 +397,34 @@ Focus on the most important and effective usability problems that real users wou
     if (language === 'en') {
       return `Analyze the provided app view and identify usability issues. Focus on problems that would affect real users in actual usage scenarios.
 
-Describe each problem in a separate paragraph with an empty line between problems. Use domain-specific language and avoid technical terminology.`
+Describe each problem in a separate paragraph with an empty line between problems. Use domain-specific language and avoid technical terminology.
+
+## IMPORTANT: Categorization of Findings
+Each finding MUST begin with one of the following assessments:
+
+**[CATASTROPHIC]** - Severe problems that make the app unusable
+**[CRITICAL]** - Serious problems that strongly impair usability
+**[SERIOUS]** - Significant problems that worsen user experience
+**[MINOR]** - Smaller problems with minor effects
+**[POSITIVE]** - Positive aspects of the user interface
+
+Example: **[CRITICAL]** Missing visual feedback makes users uncertain about their interactions.`
     }
     
     return `Analysiere die bereitgestellte App-Ansicht und identifiziere Usability-Probleme. Konzentriere dich auf Probleme, die echte Nutzer in tatsächlichen Nutzungsszenarien beeinträchtigen würden.
 
-Beschreibe jedes Problem in einem separaten Absatz mit einer Leerzeile zwischen den Problemen. Verwende domänenspezifische Sprache und vermeide technische Terminologie.`
+Beschreibe jedes Problem in einem separaten Absatz mit einer Leerzeile zwischen den Problemen. Verwende domänenspezifische Sprache und vermeide technische Terminologie.
+
+## WICHTIG: Kategorisierung der Befunde
+Jeder Befund MUSS mit einer der folgenden Bewertungen beginnen:
+
+**[KATASTROPHAL]** - Schwerwiegende Probleme, die die App unbrauchbar machen
+**[KRITISCH]** - Schwere Probleme, die die Nutzerfreundlichkeit stark beeinträchtigen
+**[ERNST]** - Erhebliche Probleme, die die Nutzererfahrung verschlechtern
+**[GERING]** - Kleinere Probleme mit geringfügigen Auswirkungen
+**[POSITIV]** - Positive Aspekte der Benutzeroberfläche
+
+Beispiel: **[KRITISCH]** Fehlendes visuelles Feedback macht Nutzer unsicher über ihre Interaktionen.`
   }
 
   /**
@@ -466,18 +488,18 @@ Focus on problems that affect **real users in actual situations**:
 ## IMPORTANT: Categorization of Findings
 Each finding MUST begin with one of the following assessments:
 
-**[CATASTROPHIC]** - For severe problems that make the app unusable or completely block important tasks
-**[CRITICAL]** - For serious problems that strongly impair user-friendliness
-**[SERIOUS]** - For significant problems that noticeably worsen the user experience
-**[MINOR]** - For smaller problems that have only minor effects
-**[POSITIVE]** - For positive aspects and strengths of the user interface
+**[CATASTROPHIC]** - Existential threats, there is a risk of major damage to the user or organization. This assessment should only be given after consultation with management, never by the UX professional alone.
+**[CRITICAL]** - Test participants have given up or are very dissatisfied, or there is a risk of minor damage to the user
+**[SERIOUS]** - Significant delays or moderate dissatisfaction
+**[MINOR]** - Noticeable delays or minor dissatisfaction
+**[POSITIVE]** - Something that worked well in the current usability test or that test participants liked
 
 Example of correct format:
-**[CRITICAL]** Missing interaction hints make it difficult for users to understand which elements are clickable.
+**[CRITICAL]** Missing interaction hints make it difficult for users to understand which elements are clickable, causing test participants to give up.
 
-**[POSITIVE]** The color scheme is consistent and supports a clear visual hierarchy.
+**[POSITIVE]** The color scheme is consistent and was well-received by test participants as it supports a clear visual hierarchy.
 
-**[SERIOUS]** Font sizes that are too small can impair readability in poor lighting conditions.
+**[SERIOUS]** Font sizes that are too small cause significant delays in reading and lead to moderate dissatisfaction in poor lighting conditions.
 
 Conduct an open, exploratory problem identification without limiting the number of problems. Let yourself be guided by the provided input and identify the most important usability challenges for real users.
 </instructions>`
@@ -538,18 +560,18 @@ Konzentriere dich auf Probleme, die **echte Nutzer in realen Situationen** beein
 ## WICHTIG: Kategorisierung der Befunde
 Jeder Befund MUSS mit einer der folgenden Bewertungen beginnen:
 
-**[KATASTROPHAL]** - Für schwerwiegende Probleme, die die App unbrauchbar machen oder wichtige Aufgaben komplett blockieren
-**[KRITISCH]** - Für schwere Probleme, die die Nutzerfreundlichkeit stark beeinträchtigen
-**[ERNST]** - Für erhebliche Probleme, die die Nutzererfahrung spürbar verschlechtern
-**[GERING]** - Für kleinere Probleme, die nur geringfügige Auswirkungen haben
-**[POSITIV]** - Für positive Aspekte und Stärken der Benutzeroberfläche
+**[KATASTROPHAL]** - Existenzielle Bedrohungen, es besteht die Gefahr eines größeren Schadens für den Benutzer oder die Organisation. Diese Bewertung sollte nur nach Rücksprache mit dem Management vergeben werden, keinesfalls durch den UX Professional allein.
+**[KRITISCH]** - Die Testteilnehmer haben aufgegeben oder sind sehr unzufrieden, oder es besteht die Gefahr eines geringfügigen Schadens für den Benutzer
+**[ERNST]** - Erhebliche Verzögerungen oder mäßige Unzufriedenheit
+**[GERING]** - Spürbare Verzögerungen oder geringe Unzufriedenheit
+**[POSITIV]** - Etwas, das im Rahmen des aktuellen Usability-Tests gut funktioniert hat oder den Testteilnehmern gefallen hat
 
 Beispiel für korrektes Format:
-**[KRITISCH]** Fehlende Interaktionshinweise machen es für Nutzer schwierig zu verstehen, welche Elemente anklickbar sind.
+**[KRITISCH]** Fehlende Interaktionshinweise machen es für Nutzer schwierig zu verstehen, welche Elemente anklickbar sind, was dazu führt, dass Testteilnehmer aufgeben.
 
-**[POSITIV]** Die Farbgebung ist konsistent und unterstützt eine klare visuelle Hierarchie.
+**[POSITIV]** Die Farbgebung ist konsistent und hat den Testteilnehmern gut gefallen, da sie eine klare visuelle Hierarchie unterstützt.
 
-**[ERNST]** Zu kleine Schriftgrößen können die Lesbarkeit bei schlechten Lichtverhältnissen beeinträchtigen.
+**[ERNST]** Zu kleine Schriftgrößen verursachen erhebliche Verzögerungen beim Lesen und führen zu mäßiger Unzufriedenheit bei schlechten Lichtverhältnissen.
 
 Führe eine offene, explorative Problemidentifikation durch ohne Begrenzung der Anzahl der Probleme. Lass dich von der bereitgestellten Eingabe leiten und identifiziere die wichtigsten Usability-Herausforderungen für echte Nutzer.
 </instructions>`

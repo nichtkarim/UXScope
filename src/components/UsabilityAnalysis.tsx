@@ -310,7 +310,7 @@ ${variant === 'study-pure'
     const categorizeBlock = (block: string): { severity: string; type: string; confidence: number } => {
       const upperBlock = block.toUpperCase()
       
-      // Look for explicit LLM-assigned categories in the text
+      // Look for explicit LLM-assigned categories in the text (German)
       if (upperBlock.includes('**[KATASTROPHAL]**') || upperBlock.includes('[KATASTROPHAL]')) {
         return { severity: 'catastrophic', type: 'catastrophic', confidence: 10 }
       }
@@ -327,6 +327,23 @@ ${variant === 'study-pure'
         return { severity: 'positive', type: 'positive', confidence: 10 }
       }
       
+      // Look for explicit LLM-assigned categories in the text (English)
+      if (upperBlock.includes('**[CATASTROPHIC]**') || upperBlock.includes('[CATASTROPHIC]')) {
+        return { severity: 'catastrophic', type: 'catastrophic', confidence: 10 }
+      }
+      if (upperBlock.includes('**[CRITICAL]**') || upperBlock.includes('[CRITICAL]')) {
+        return { severity: 'critical', type: 'critical', confidence: 10 }
+      }
+      if (upperBlock.includes('**[SERIOUS]**') || upperBlock.includes('[SERIOUS]')) {
+        return { severity: 'serious', type: 'serious', confidence: 10 }
+      }
+      if (upperBlock.includes('**[MINOR]**') || upperBlock.includes('[MINOR]')) {
+        return { severity: 'minor', type: 'minor', confidence: 10 }
+      }
+      if (upperBlock.includes('**[POSITIVE]**') || upperBlock.includes('[POSITIVE]')) {
+        return { severity: 'positive', type: 'positive', confidence: 10 }
+      }
+      
       // Fallback: If no explicit category found, default to minor
       return { severity: 'minor', type: 'minor', confidence: 1 }
     }
@@ -337,8 +354,8 @@ ${variant === 'study-pure'
       
       // Remove category tags from the displayed text and clean up formatting
       const cleanBlock = block
-        .replace(/\*\*\[(KATASTROPHAL|KRITISCH|ERNST|GERING|POSITIV)\]\*\*/gi, '')
-        .replace(/\[(KATASTROPHAL|KRITISCH|ERNST|GERING|POSITIV)\]/gi, '')
+        .replace(/\*\*\[(KATASTROPHAL|KRITISCH|ERNST|GERING|POSITIV|CATASTROPHIC|CRITICAL|SERIOUS|MINOR|POSITIVE)\]\*\*/gi, '')
+        .replace(/\[(KATASTROPHAL|KRITISCH|ERNST|GERING|POSITIV|CATASTROPHIC|CRITICAL|SERIOUS|MINOR|POSITIVE)\]/gi, '')
         .replace(/^\s*[\*\-]\s*/, '') // Remove leading bullets or asterisks
         .replace(/^\s+|\s+$/g, '') // Trim whitespace
         .replace(/\s+/g, ' ') // Normalize multiple spaces

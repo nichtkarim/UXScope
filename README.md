@@ -56,9 +56,18 @@ Das Projekt verfolgt mehrere wissenschaftliche und praktische Ziele:
 ### Erweiterte Einstellungen
 
 - **Prompt-Variante wählen**: Experimentieren Sie mit verschiedenen Analyse-Ansätzen
-- **UI-Modus**: Wählen Sie zwischen SwiftUI-spezifisch oder generalisiert
+  - **Study-Pure**: IEEE-Studie Replikation mit Technologie-Modi
+  - **Basic**: Minimalistischer, offener Ansatz
+  - **Advanced**: Umfassende wissenschaftliche Analyse
+
+- **UI-Modus (nur Study-Pure)**: 
+  - **SwiftUI-Only**: Originalgetreue IEEE-Studie für iOS/SwiftUI-Apps
+  - **Generalisiert**: Technologie-unabhängige Adaption für React, Flutter, HTML/CSS, etc.
+
 - **Sprache**: Stellen Sie die Prompt-Sprache auf Deutsch oder Englisch
 - **Custom Prompts**: Fügen Sie spezifische Anforderungen hinzu
+
+**Hinweis zum UI-Modus**: Der UI-Modus ist nur bei der Study-Pure Variante verfügbar und ermöglicht es, die IEEE-Methodik entweder originalgetreu (SwiftUI-Only) oder technologie-unabhängig (Generalisiert) anzuwenden.
 
 ### Navigation
 
@@ -140,7 +149,7 @@ Eine funktionsfähige Version der Anwendung ist verfügbar unter:
 
 ### Basis-Literatur und IEEE-Studie
 
-Die methodische Grundlage dieser Arbeit bildet primär die IEEE-Studie **"Does GenAI Make Usability Testing Obsolete?"** von Femmer et al., die als erste systematische Untersuchung zur Anwendung von Large Language Models in der Usability-Evaluation gilt. Diese Studie untersuchte die Fähigkeit von GPT-4 zur Identifikation von Usability-Problemen in SwiftUI-Anwendungen und etablierte eine Baseline für LLM-basierte UX-Bewertungen.
+Die methodische Grundlage dieser Arbeit bildet primär die IEEE-Studie **"Does GenAI Make Usability Testing Obsolete?"** (ICSE 2025, IEEE Computer Society Digital Library: 056900a675), die als erste systematische Untersuchung zur Anwendung von Large Language Models in der Usability-Evaluation gilt. Diese Studie untersuchte die Fähigkeit von GPT-4 zur Identifikation von Usability-Problemen in SwiftUI-Anwendungen und etablierte eine Baseline für LLM-basierte UX-Bewertungen.
 
 **Zentrale Erkenntnisse der Originalstudie:**
 - GPT-4 kann systematisch Usability-Probleme identifizieren
@@ -188,13 +197,30 @@ Dieser Ansatz ermöglicht es zu untersuchen, ob und wie LLMs etablierte UX-Prinz
 Die Anwendung implementiert drei wissenschaftlich fundierte Prompt-Strategien:
 
 #### 1. Study-Pure (IEEE-Replikation)
-- **Basis**: Direkte Replikation der in der IEEE-Studie "Does GenAI Make Usability Testing Obsolete?" verwendeten Prompts
+- **Basis**: Direkte Replikation der in der IEEE-Studie "Does GenAI Make Usability Testing Obsolete?" (ICSE 2025) verwendeten Prompts
 - **Ziel**: Reproduzierbare Ergebnisse und Vergleichbarkeit mit publizierten Forschungsergebnissen
 - **Charakteristika**: 
-  - Originalgetreue Prompt-Struktur
+  - Originalgetreue Prompt-Struktur aus der ICSE-Studie
   - Keine explizite Heuristik-Vorgabe
   - Minimal-invasiver Ansatz
   - Verfügbar in deutscher Übersetzung für erweiterte Anwendbarkeit
+
+**Technologie-Flexibilität der Study-Pure Variante:**
+
+Die ursprüngliche IEEE-Studie fokussierte sich ausschließlich auf SwiftUI-Anwendungen. UXScope erweitert diesen Ansatz durch zwei Modi:
+
+- **SwiftUI-Only Modus**: Exakte Replikation der Originalstudie
+  - Prompts referenzieren explizit SwiftUI und iOS
+  - Direkte Vergleichbarkeit mit den ICSE-Ergebnissen
+  - Methodisch konsistent für wissenschaftliche Validierung
+
+- **Generalisierter Modus**: Technologie-unabhängige Adaption
+  - Prompts verwenden allgemeine UI-Terminologie
+  - Anwendbar auf React, Flutter, HTML/CSS, etc.
+  - Erweitert die Anwendbarkeit der IEEE-Methodik
+  - Ermöglicht Cross-Platform-Usability-Bewertungen
+
+Diese Flexibilität erlaubt es, die bewährte IEEE-Methodik auf moderne Multi-Platform-Entwicklung anzuwenden, während die wissenschaftliche Integrität der Originalstudie gewahrt bleibt.
 
 #### 2. Basic (UX-LLM-Studie adaptiert)
 - **Basis**: Adaptierte Erkenntnisse aus der UX-LLM-Studie (IEEE Xplore: 11029918)

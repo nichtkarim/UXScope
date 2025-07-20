@@ -187,7 +187,6 @@ export default function ProfileSelector({
       setIsCreatingProfile(false)
       setValidationErrors([])
       
-      console.log('✅ Profil erstellt:', profile)
     } catch (error) {
       console.error('❌ Fehler beim Erstellen des Profils:', error)
       setValidationErrors(['Fehler beim Erstellen des Profils'])
@@ -209,7 +208,6 @@ export default function ProfileSelector({
           onProfileChange('')
         }
         
-        console.log('✅ Profil gelöscht:', profileId)
       } catch (error) {
         console.error('❌ Fehler beim Löschen des Profils:', error)
         alert('Fehler beim Löschen des Profils')

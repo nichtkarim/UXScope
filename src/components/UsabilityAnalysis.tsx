@@ -337,9 +337,7 @@ ${variant === 'study-pure'
     
     // If we have structured findings from the API, use those instead of parsing text
     if (findings && findings.length > 0) {
-      console.log('🔍 Using structured findings from API:', findings.length)
       
-      // Map API categories to frontend severities
       const mapApiCategoryToSeverity = (category: string): string => {
         const categoryUpper = category.toUpperCase();
         if (categoryUpper === 'KATASTROPHAL' || categoryUpper === 'CATASTROPHIC') return 'catastrophic';
@@ -369,7 +367,6 @@ ${variant === 'study-pure'
       
       findings.forEach((finding) => {
         const severity = mapApiCategoryToSeverity(finding.category)
-        console.log(`🔍 Finding: ${finding.category} -> ${severity}`)
         findingsBySeverity[severity as keyof typeof findingsBySeverity].push(finding)
       })
       
@@ -392,10 +389,6 @@ ${variant === 'study-pure'
       return sections
     }
     
-    // Fallback to text parsing if no structured findings available
-    console.log('🔍 No structured findings, falling back to text parsing')
-    
-    // Split text into logical problem blocks instead of individual sentences
     const problemBlocks = text
       .split(/\n\s*\n|\r\n\s*\r\n/) // Split by double line breaks first
       .filter(block => block.trim().length > 20)

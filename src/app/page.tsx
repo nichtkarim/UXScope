@@ -110,11 +110,6 @@ export default function Home() {
       return
     }
 
-    console.log('🔍 Selected Profile:', {
-      ...selectedProfile,
-      apiKey: selectedProfile.apiKey ? '[REDACTED]' : 'NOT_SET'
-    })
-
     if (!selectedProfile.apiKey || selectedProfile.apiKey.trim() === '') {
       alert('Das ausgewählte Profil hat keinen API-Key. Bitte erstellen Sie ein neues Profil mit einem gültigen API-Key.')
       return
@@ -144,22 +139,6 @@ export default function Home() {
     setIsAnalyzing(true)
 
     try {
-      // Debug: Log what we're sending
-      console.log('Sending analysis request:', {
-        profile: {
-          id: selectedProfile.id,
-          selectedModel: selectedProfile.selectedModel,
-          hasApiKey: !!selectedProfile.apiKey
-        },
-        context: {
-          description: contextData.description,
-          uiCode: contextData.uiCode,
-          userTask: contextData.userTask,
-          customPrompt: contextData.customPrompt
-        },
-        hasImage: !!uploadedImage
-      })
-
       const requestBody = {
         userProfile: selectedProfile,
         image: uploadedImage,
@@ -175,23 +154,11 @@ export default function Home() {
         },
       }
 
-      console.log('🔍 Sending request to API:', {
-        userProfile: {
-          ...selectedProfile,
-          apiKey: selectedProfile.apiKey ? '[REDACTED]' : 'NOT_SET'
-        },
-        hasImage: !!uploadedImage,
-        context: requestBody.context
-      })
-
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       })
-
-      console.log('Response status:', response.status)
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
 
       if (!response.ok) {
         let errorData
@@ -199,23 +166,23 @@ export default function Home() {
         
         try {
           const responseText = await response.text()
-          console.log('Raw response text:', responseText.substring(0, 500) + '...')
           
-          // Try to parse as JSON first
+          // Log raw response für debugging
+          console.error('Raw API Error Response (first 500 chars):', responseText.substring(0, 500))
+          
           try {
             errorData = JSON.parse(responseText)
             errorMessage = errorData?.error || `HTTP ${response.status}: ${response.statusText}`
           } catch (jsonError) {
-            // If not JSON, it might be HTML error page
+            console.error('Failed to parse error JSON:', jsonError)
             if (responseText.includes('Internal Server Error') || responseText.includes('<html')) {
               errorMessage = `Server Error (${response.status}): Internal Server Error`
             } else {
-              errorMessage = `HTTP ${response.status}: ${response.statusText}`
+              errorMessage = `HTTP ${response.status}: ${response.statusText} - ${responseText.substring(0, 200)}`
             }
           }
         } catch (textError) {
           errorMessage = `HTTP ${response.status}: ${response.statusText}`
-          console.error('Failed to read response text:', textError)
         }
         
         if (response.status === 401) {
@@ -233,13 +200,21 @@ export default function Home() {
           statusText: response.statusText,
           error: errorMessage,
           errorData: errorData,
-          url: response.url
+          url: response.url,
+          headers: Object.fromEntries(response.headers.entries())
         })
-        return // Exit gracefully instead of throwing
+        
+        // Zusätzliche Debug-Informationen
+        if (errorData) {
+          console.error('Parsed Error Data:', errorData)
+          if (errorData.details) {
+            console.error('Error Details:', errorData.details)
+          }
+        }
+        return
       }
 
       const responseText = await response.text()
-      console.log('Response text preview:', responseText.substring(0, 200) + '...')
       
       let data
       try {
@@ -578,7 +553,6 @@ export default function Home() {
                 llmAnalyses={llmAnalyses}
                 groundTruth={groundTruth}
                 onExportResults={(results) => {
-                  console.log('Export Results:', results)
                   // Hier könnte man die Ergebnisse speichern oder weiterverarbeiten
                 }}
               />
@@ -588,7 +562,6 @@ export default function Home() {
               <AlternativeEvaluation 
                 llmAnalyses={llmAnalyses}
                 onExportResults={(results) => {
-                  console.log('Alternative Export Results:', results)
                   // Hier könnte man die qualitativen Ergebnisse speichern oder weiterverarbeiten
                 }}
               />

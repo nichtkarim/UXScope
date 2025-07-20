@@ -12,7 +12,7 @@ interface ImageUploadProps {
 export default function ImageUpload({ onImageUpload, uploadedImage }: ImageUploadProps) {
   const [showPreview, setShowPreview] = useState(false)
   
-  // ESC key handler
+  // ESC-Taste Handler
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && showPreview) {
@@ -22,7 +22,7 @@ export default function ImageUpload({ onImageUpload, uploadedImage }: ImageUploa
     
     if (showPreview) {
       document.addEventListener('keydown', handleEscape)
-      // Prevent scrolling when modal is open
+      // Scrollen verhindern wenn Modal offen ist
       document.body.style.overflow = 'hidden'
     }
     
@@ -57,7 +57,6 @@ export default function ImageUpload({ onImageUpload, uploadedImage }: ImageUploa
   }
 
   const handleImageClick = () => {
-    console.log('🖼️ Image clicked, opening preview')
     setShowPreview(true)
   }
 
@@ -147,11 +146,9 @@ export default function ImageUpload({ onImageUpload, uploadedImage }: ImageUploa
       {/* Fullscreen Preview Modal */}
       {showPreview && uploadedImage && (
         <>
-          {console.log('🔍 Modal rendering, showPreview:', showPreview, 'uploadedImage exists:', !!uploadedImage)}
           <div 
             className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4"
             onClick={() => {
-              console.log('🔍 Modal background clicked, closing preview')
               setShowPreview(false)
             }}
             style={{ zIndex: 9999 }}
@@ -165,7 +162,6 @@ export default function ImageUpload({ onImageUpload, uploadedImage }: ImageUploa
               />
               <button
                 onClick={() => {
-                  console.log('🔍 Close button clicked')
                   setShowPreview(false)
                 }}
                 className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 transition-colors z-10"
@@ -173,7 +169,6 @@ export default function ImageUpload({ onImageUpload, uploadedImage }: ImageUploa
               >
                 <X className="h-5 w-5" />
               </button>
-              {/* ESC key hint */}
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded text-sm">
                 ESC oder außerhalb klicken zum Schließen
               </div>

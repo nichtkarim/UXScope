@@ -128,22 +128,14 @@ function extractCategoriesAndCleanText(text: string): {
 }
 
 export async function POST(request: Request) {
-  console.log('🔍 API Route called - /api/analyze')
   try {
-    // Dynamically import LLM providers to catch any import errors
     let LLM_MODELS, callLLM;
     try {
-      console.log('🔍 Starting dynamic import...');
       const llmModule = await import('@/lib/llmProviders');
-      console.log('🔍 LLM Module imported:', Object.keys(llmModule));
       LLM_MODELS = llmModule.LLM_MODELS;
       callLLM = llmModule.callLLM;
-      console.log('🔍 Dynamic import successful - LLM_MODELS:', !!LLM_MODELS, 'callLLM:', !!callLLM);
-      if (LLM_MODELS) {
-        console.log('🔍 Available models:', Object.keys(LLM_MODELS));
-      }
     } catch (importError) {
-      console.error('❌ Failed to import LLM providers:', importError);
+      console.error('Failed to import LLM providers:', importError);
       const errorMessage = importError instanceof Error ? importError.message : String(importError);
       return NextResponse.json(
         { error: `LLM Provider import failed: ${errorMessage}` },
@@ -152,16 +144,14 @@ export async function POST(request: Request) {
     }
 
     if (!LLM_MODELS || !callLLM) {
-      console.error('❌ LLM-Services nicht verfügbar nach Import')
+      console.error('LLM-Services nicht verfügbar nach Import')
       return NextResponse.json(
         { error: 'LLM-Services nicht verfügbar nach Import' },
         { status: 500 }
       )
     }
 
-    console.log('🔍 Parsing request body...')
     const requestBody = await request.json()
-    console.log('🔍 Request body keys:', Object.keys(requestBody))
     
     const { 
       image, 
@@ -169,24 +159,10 @@ export async function POST(request: Request) {
       userProfile
     } = requestBody
     
-    console.log('🔍 Extracted data:', {
-      hasImage: !!image,
-      hasContext: !!context,
-      hasUserProfile: !!userProfile,
-      userProfileKeys: userProfile ? Object.keys(userProfile) : 'none'
-    })
-    
-    // Extrahiere promptVariant, promptLanguage und uiMode aus context, falls vorhanden
     const promptVariant = context?.promptVariant || 'advanced'
     const promptLanguage = context?.language || 'de'
     const uiMode = context?.uiMode || 'generalized'
     
-    console.log('🔍 Debug - Received context:', context)
-    console.log('🔍 Debug - Extracted promptVariant:', promptVariant)
-    console.log('🔍 Debug - Extracted promptLanguage:', promptLanguage)
-    console.log('🔍 Debug - Extracted uiMode:', uiMode)
-    
-    // Validierung
     if (!image && !context) {
       return NextResponse.json(
         { error: 'Bild oder Kontext erforderlich' },
@@ -227,7 +203,6 @@ export async function POST(request: Request) {
 
     // API-Key-Validierung (außer für lokale LLMs)
     if (modelConfig.requiresApiKey && !userProfile.apiKey) {
-      // Generate prompt for testing even if API key is missing
       const appContext = {
         appDescription: context?.description || 'Unbekannte Anwendung',
         userTask: context?.userTask || 'Allgemeine Usability-Evaluation',
@@ -248,17 +223,16 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { 
           error: `API-Key für ${modelConfig.name} nicht konfiguriert`,
-          prompt: prompt // Include prompt for testing
+          prompt: prompt
         },
         { status: 400 }
       )
     }
 
-    console.log(`🤖 Starte Analyse mit ${modelConfig.name}...`)
+    console.log(`Starte Analyse mit ${modelConfig.name}...`)
     
-    // Warnung für Vision-Fähigkeiten
     if (image && !modelConfig.supportsVision) {
-      console.warn(`⚠️ ${modelConfig.name} unterstützt keine Bild-Analyse. Nur Text wird analysiert.`)
+      console.warn(`${modelConfig.name} unterstützt keine Bild-Analyse. Nur Text wird analysiert.`)
     }
 
     const startTime = Date.now()
@@ -281,10 +255,7 @@ export async function POST(request: Request) {
       promptLanguage,
       uiMode
     )
-    
-    console.log('🔍 API Debug - Generated prompt length:', prompt.length)
-    console.log('🔍 API Debug - Prompt preview (first 300 chars):')
-    console.log(prompt.substring(0, 300) + '...')
+
 
     // LLM aufrufen
     const messages: any[] = [
@@ -293,7 +264,6 @@ export async function POST(request: Request) {
     
     if (image && modelConfig.supportsVision) {
       if (modelConfig.provider === 'anthropic') {
-        // Claude/Anthropic format
         messages[0].content = [
           { type: 'text', text: prompt },
           { 
@@ -301,12 +271,11 @@ export async function POST(request: Request) {
             source: { 
               type: 'base64',
               media_type: image.startsWith('data:image/png') ? 'image/png' : 'image/jpeg',
-              data: image.split(',')[1] // Remove data:image/xxx;base64, prefix
+              data: image.split(',')[1]
             } 
           }
         ]
       } else {
-        // OpenAI/Together/Grok format
         messages[0].content = [
           { type: 'text', text: prompt },
           { type: 'image_url', image_url: { url: image } }
@@ -320,39 +289,22 @@ export async function POST(request: Request) {
       messages
     )
     
-    console.log('🔍 RAW LLM OUTPUT (first 500 chars):')
-    console.log(analysis.substring(0, 500) + '...')
-    console.log('🔍 RAW LLM OUTPUT contains [KATEGORIE] tags:', /\*\*\[[A-Z]+\]\*\*/.test(analysis))
-    
-    // Extrahiere Kategorien und bereite saubere Nutzer-Ausgabe vor
     const { cleanText, findings } = extractCategoriesAndCleanText(analysis);
     
-    console.log('🔍 EXTRACTED FINDINGS:')
-    findings.forEach((finding, index) => {
-      console.log(`${index + 1}. [${finding.category}]: ${finding.text.substring(0, 50)}...`)
-    })
-    
     const processingTime = Date.now() - startTime
-    console.log(`✅ Analyse abgeschlossen mit ${modelConfig.name} in ${processingTime}ms`)
-    console.log(`📊 Gefundene Befunde: ${findings.length}`)
     
-    // Konvertiere deutsche Kategorien zu Frontend-Severities
     const mapSeverity = (category: string): 'low' | 'medium' | 'high' | 'critical' => {
       const categoryUpper = category.toUpperCase();
-      console.log(`🔍 MAPPING: "${category}" -> "${categoryUpper}" -> severity`)
       if (categoryUpper === 'KATASTROPHAL' || categoryUpper === 'CATASTROPHIC') return 'critical';
       if (categoryUpper === 'KRITISCH' || categoryUpper === 'CRITICAL') return 'high';
       if (categoryUpper === 'ERNST' || categoryUpper === 'SERIOUS') return 'medium';
       if (categoryUpper === 'GERING' || categoryUpper === 'MINOR') return 'low';
-      if (categoryUpper === 'POSITIV' || categoryUpper === 'POSITIVE') return 'low'; // Positive als low behandeln
-      console.log(`⚠️ UNKNOWN CATEGORY: "${category}" -> defaulting to low`)
-      return 'low'; // Default
+      if (categoryUpper === 'POSITIV' || categoryUpper === 'POSITIVE') return 'low';
+      return 'low';
     };
     
-    // Strukturierte Probleme für das Frontend erstellen
     const problems = findings.map((finding, index) => {
       const severity = mapSeverity(finding.category);
-      console.log(`🔍 PROBLEM ${index + 1}: Category="${finding.category}" -> Severity="${severity}"`);
       return {
         id: `problem-${index + 1}`,
         title: `Problem ${index + 1}`,
@@ -365,7 +317,6 @@ export async function POST(request: Request) {
       }
     });
     
-    // LLMAnalysis Format für das Frontend
     const llmAnalysis = {
       llmId: userProfile.selectedModel,
       llmName: modelConfig.name,
@@ -375,13 +326,12 @@ export async function POST(request: Request) {
       rawResponse: analysis
     };
     
-    // Rückgabe im erwarteten Format für das Frontend
     const response = {
-      analysis: cleanText,         // Was das Frontend als "analysis" erwartet
-      cleanText: cleanText,        // Für die Nutzer-Anzeige (Backup)
-      rawAnalysis: analysis,       // Original für Debugging
-      analyses: [llmAnalysis],     // Array von LLM-Analysen für AlternativeEvaluation
-      findings: findings,          // Strukturierte Befunde
+      analysis: cleanText,
+      cleanText: cleanText,
+      rawAnalysis: analysis,
+      analyses: [llmAnalysis],
+      findings: findings,
       metadata: {
         llmModel: userProfile.selectedModel,
         llmName: modelConfig.name,
@@ -402,36 +352,40 @@ export async function POST(request: Request) {
     return NextResponse.json(response)
     
   } catch (error) {
-    console.error('❌ Analyse-Fehler (DETAILLIERT):', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack',
-      type: typeof error
-    })
+    console.error('Analyse-Fehler:', error)
+    
+    // Detaillierte Fehleranalyse für besseres Debugging
     let errorMessage = 'Unbekannter Fehler';
+    let errorDetails = '';
+    
     if (error instanceof Error) {
       errorMessage = error.message;
+      errorDetails = error.stack || '';
+      
+      // Spezielle Behandlung für API-Fehler
+      if (error.message.includes('API') || error.message.includes('401') || error.message.includes('403')) {
+        errorMessage = `API-Fehler: ${error.message}. Bitte überprüfen Sie Ihren API-Key.`;
+      } else if (error.message.includes('model') || error.message.includes('Model')) {
+        errorMessage = `Modell-Fehler: ${error.message}. Das gewählte Modell ist möglicherweise nicht verfügbar.`;
+      }
     } else if (typeof error === 'string') {
       errorMessage = error;
     } else if (error && typeof error === 'object' && 'message' in error) {
       errorMessage = (error as any).message;
+      errorDetails = JSON.stringify(error, null, 2);
     }
     
-    // Try to include prompt in error response for debugging
-    let prompt = null;
-    try {
-      // We can't re-read the request body after it's been consumed
-      // So we'll skip generating the prompt in the error case
-      console.log('Error occurred, skipping prompt generation for error response');
-    } catch (promptError) {
-      console.log('Could not generate prompt for error response:', promptError);
-    }
+    console.error('Detaillierte Fehlerinformationen:', {
+      message: errorMessage,
+      details: errorDetails,
+      errorType: typeof error,
+      errorConstructor: error?.constructor?.name
+    });
     
-    // Immer ein JSON-Objekt mit error-Feld zurückgeben
     return NextResponse.json(
       { 
         error: `Analyse fehlgeschlagen: ${errorMessage}`,
-        prompt: prompt
+        details: errorDetails.substring(0, 1000) // Begrenzte Details für Frontend
       },
       { status: 500 }
     )

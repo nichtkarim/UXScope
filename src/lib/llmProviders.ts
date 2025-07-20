@@ -1,5 +1,3 @@
-// LLM providers with graceful fallbacks for missing packages
-
 export interface LLMConfig {
   id: string
   name: string
@@ -37,6 +35,24 @@ export const LLM_MODELS: Record<string, LLMConfig> = {
     requiresApiKey: true,
     supportsVision: true,
     modelId: 'claude-3-5-sonnet-20241022'
+  },
+  'claude-3-opus': {
+    id: 'claude-3-opus',
+    name: 'Claude 3 Opus',
+    description: 'Anthropics leistungsstärkstes Modell mit außergewöhnlichen Analyse-Fähigkeiten',
+    provider: 'anthropic',
+    requiresApiKey: true,
+    supportsVision: true,
+    modelId: 'claude-3-opus-20240229'
+  },
+  'claude-3-sonnet': {
+    id: 'claude-3-sonnet',
+    name: 'Claude 3 Sonnet',
+    description: 'Ausgewogenes Claude 3 Modell mit exzellenter Leistung und Effizienz',
+    provider: 'anthropic',
+    requiresApiKey: true,
+    supportsVision: true,
+    modelId: 'claude-3-sonnet-20240229'
   },
   'claude-3-haiku': {
     id: 'claude-3-haiku',
@@ -89,8 +105,8 @@ export const LLM_MODELS: Record<string, LLMConfig> = {
     description: 'xAI\'s Grok 4 model with advanced reasoning and real-time information',
     provider: 'grok',
     requiresApiKey: true,
-    supportsVision: true,
-    modelId: 'grok-2-1212'
+    supportsVision: false,
+    modelId: 'grok-4'
   },
   'grok-vision-beta': {
     id: 'grok-vision-beta',
@@ -99,7 +115,7 @@ export const LLM_MODELS: Record<string, LLMConfig> = {
     provider: 'grok',
     requiresApiKey: true,
     supportsVision: true,
-    modelId: 'grok-2-vision-1212'
+    modelId: 'grok-4'
   }
 }
 
@@ -122,7 +138,6 @@ export function validateApiKey(provider: string, apiKey: string): boolean {
   }
 }
 
-// Dynamic import helpers with fallbacks
 async function createOpenAIClient(apiKey: string): Promise<any> {
   try {
     const { default: OpenAI } = await import('openai')
@@ -155,7 +170,6 @@ async function createTogetherClient(apiKey: string): Promise<any> {
 
 async function createGrokClient(apiKey: string): Promise<any> {
   try {
-    // Grok uses OpenAI-compatible API
     const { default: OpenAI } = await import('openai')
     return new OpenAI({ 
       apiKey,
@@ -187,7 +201,6 @@ async function createLLMClient(modelId: string, apiKey: string): Promise<any> {
       return await createGrokClient(apiKey)
 
     case 'local':
-      // For local models (e.g., Ollama), we don't need a client
       return null
 
     default:
@@ -233,17 +246,96 @@ async function generateResponse(
     }
 
     case 'grok': {
-      const completion = await client.chat.completions.create({
-        model: modelConfig.modelId,
-        messages,
-        max_tokens: 2000,
-        temperature: 0.7
-      })
-      return completion.choices[0]?.message?.content || 'No response generated'
+      try {
+        // Ultra-aggressive ASCII-only Bereinigung für Grok
+        const cleanText = (text: string): string => {
+          // Schritt 1: Unicode in einfache ASCII-Zeichen umwandeln
+          let cleaned = text
+            // Deutsche Umlaute
+            .replace(/[äÄ]/g, 'ae')
+            .replace(/[öÖ]/g, 'oe')
+            .replace(/[üÜ]/g, 'ue')
+            .replace(/ß/g, 'ss')
+            // Alle typografischen Anführungszeichen
+            .replace(/[""„«»]/g, '"')
+            .replace(/[''‚‹›]/g, "'")
+            // Alle Gedankenstriche
+            .replace(/[–—]/g, '-')
+            .replace(/…/g, '...')
+            // Alle anderen diakritischen Zeichen
+            .replace(/[àáâãåæçèéêëìíîïñòóôõøùúûý]/gi, function(match) {
+              const chars = 'aaaaaaeceeeeiiiinoooooouuuy'
+              const index = 'àáâãåæçèéêëìíîïñòóôõøùúûý'.indexOf(match.toLowerCase())
+              return index >= 0 ? chars[index] : match
+            })
+          
+          // Schritt 2: Byte-für-Byte prüfen und nur sichere ASCII behalten
+          let result = ''
+          for (let i = 0; i < cleaned.length; i++) {
+            const char = cleaned[i]
+            const code = char.charCodeAt(0)
+            
+            // Nur ASCII-Zeichen 32-126 (druckbare Zeichen) + Newline (10) + Tab (9)
+            if ((code >= 32 && code <= 126) || code === 10 || code === 9) {
+              result += char
+            } else {
+              // Alle anderen Zeichen durch Leerzeichen ersetzen
+              result += ' '
+            }
+          }
+          
+          return result.replace(/\s+/g, ' ').trim()
+        }
+
+        const cleanMessages = messages.map(message => {
+          if (typeof message.content === 'string') {
+            return { ...message, content: cleanText(message.content) }
+          } else if (Array.isArray(message.content)) {
+            // Für multimodale Nachrichten
+            const cleanContent = message.content.map((part: any) => {
+              if (part.type === 'text' && typeof part.text === 'string') {
+                return { ...part, text: cleanText(part.text) }
+              }
+              return part
+            })
+            return { ...message, content: cleanContent }
+          }
+          return message
+        })
+
+        console.log('Grok: Sending cleaned messages.')
+        // Debug: Prüfe auf problematische Zeichen
+        cleanMessages.forEach((msg, index) => {
+          const content = typeof msg.content === 'string' ? msg.content : 
+            Array.isArray(msg.content) ? msg.content.map((p: any) => p.type === 'text' ? p.text : '[IMAGE]').join(' ') : '[UNKNOWN]'
+          
+          // Prüfe auf Zeichen außerhalb des ASCII-Bereichs
+          for (let i = 0; i < content.length; i++) {
+            const char = content[i]
+            const code = char.charCodeAt(0)
+            if (code > 126 || code < 32) {
+              console.log(`Found problematic character: "${char}" (code: ${code}) at position ${i} in message ${index}`)
+            }
+          }
+        })
+
+        const completion = await client.chat.completions.create({
+          model: modelConfig.modelId,
+          messages: cleanMessages,
+          max_tokens: 2000,
+          temperature: 0.7
+        })
+        return completion.choices[0]?.message?.content || 'No response generated'
+      } catch (grokError) {
+        console.error('Grok API Error:', grokError)
+        if (grokError instanceof Error) {
+          throw new Error(`Grok API Error: ${grokError.message}`)
+        }
+        throw new Error('Grok API request failed')
+      }
     }
 
     case 'local': {
-      // For local models (Ollama), make a direct HTTP request
       const response = await fetch('http://localhost:11434/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -288,10 +380,9 @@ export async function callLLM(
   } catch (error) {
     console.error(`LLM call failed for ${modelId}:`, error)
     
-    // For demo purposes, return a fallback response that makes it clear this is not a real LLM response
     const config = LLM_MODELS[modelId]
     if (config) {
-      throw error // Re-throw the original error with details
+      throw error
     } else {
       throw new Error(`Unknown model: ${modelId}`)
     }

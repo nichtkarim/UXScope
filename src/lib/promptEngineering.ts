@@ -768,34 +768,44 @@ ${appContext.sourceCode || '[No source code provided]'}`
       return `<examples>
 **Beispiele für korrekte Kategorisierung verschiedener Schweregrade:**
 
-**[KATASTROPHAL]** Login-Button ist völlig unsichtbar und nicht funktionsfähig. Nutzer können sich nicht anmelden und die App ist somit unbrauchbar.
+**[KATASTROPHAL]** Verabreichung einer tödlichen Dosis eines Medikaments, weil die Dosierungsangabe leicht falsch interpretiert werden kann.
+**→ Größtmöglicher Schaden**
 
-**[KRITISCH]** Fehlende visuelles Feedback bei kritischen Aktionen wie "Kauf abschließen" führt dazu, dass Nutzer unsicher sind und den Vorgang abbrechen.
+**[KRITISCH]** Nicht in der Lage sein, einen Flug zu buchen **oder** versehentlich einen falschen, teuren Flug buchen.
+**→ Große Unzufriedenheit, geringer Schaden**
 
-**[ERNST]** Navigation zwischen Bildschirmen ist verwirrend und unintuitiv, was zu längeren Suchzeiten und mäßiger Nutzerfrustration führt.
+**\[ERNST]** Ein Virenscan dauert mehrere Stunden und kann nicht pausiert oder gestoppt werden.
+**→ Erhebliche Verzögerung**
 
-**[GERING]** Schriftgröße in der Fußzeile ist etwas klein, beeinträchtigt aber die Hauptfunktionen nicht wesentlich.
+**[GERING]** Eine Website hat zu komplizierte Regeln für Passwörter.
+**→ Spürbare Verzögerung**
 
 **[POSITIV]** Klare Farbcodierung und konsistente Symbole unterstützen eine intuitive Bedienung und wurden von Testteilnehmern positiv bewertet.
 
 **WICHTIG: Verwende diese vollständige Bandbreite von Kategorien in deiner Analyse!**
+
 </examples>`
     }
     
     return `<examples>
 **Examples of correct categorization across different severity levels:**
 
-**[CATASTROPHIC]** Login button is completely invisible and non-functional. Users cannot log in and the app is therefore unusable.
+**[CATASTROPHIC]** Administering a fatal dose of medication because the dosage instruction can easily be misinterpreted.
+**→ Maximum possible harm**
 
-**[CRITICAL]** Missing visual feedback for critical actions like "Complete Purchase" causes users to be uncertain and abandon the process.
+**[CRITICAL]** Unable to book a flight or mistakenly booking an expensive, non-refundable flight due to poor usability.
+**→ High dissatisfaction, minor harm**
 
-**[SERIOUS]** Navigation between screens is confusing and unintuitive, leading to longer search times and moderate user frustration.
+**[SERIOUS]** A virus scan takes several hours and the antivirus program offers no way to pause or stop it.
+**→ Significant delay**
 
-**[MINOR]** Font size in the footer is somewhat small, but does not significantly impact main functions.
+**[MINOR]** A website requires overly complex rules for creating passwords.
+**→ Noticeable but minor delay**
 
 **[POSITIVE]** Clear color coding and consistent icons support intuitive operation and were positively rated by test participants.
 
 **IMPORTANT: Use this full range of categories in your analysis!**
+
 </examples>`
   }
 

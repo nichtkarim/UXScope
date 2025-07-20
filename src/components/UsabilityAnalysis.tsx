@@ -863,9 +863,11 @@ ${variant === 'study-pure'
                 
                 <div className="text-xs text-gray-500 dark:text-gray-400">
                   <p><strong>Wissenschaftlicher Hinweis:</strong> 
-                    {variant === 'basic' 
-                      ? 'Dieser Prompt wurde basierend auf der UX-LLM Studie (IEEE Xplore: 11029918) entwickelt und folgt der minimalistischen, studienkonformen Methodik für offene Problemidentifikation.' 
-                      : 'Dieser Prompt wurde basierend auf der UX-LLM Studie (IEEE Xplore: 11029918) entwickelt und integriert etablierte UX-Prinzipien wie Nielsen\'s Heuristiken und ISO 9241-110 Dialogprinzipien.'
+                    {variant === 'study-pure' 
+                      ? 'Dieser Prompt ist eine originalgetreue Replikation der IEEE-Studie "Does GenAI Make Usability Testing Obsolete?" und ermöglicht direkte Vergleichbarkeit mit den publizierten Ergebnissen.' 
+                      : variant === 'basic' 
+                        ? 'Dieser Prompt wurde basierend auf der UX-LLM Studie (IEEE Xplore: 11029918) entwickelt und folgt der minimalistischen, studienkonformen Methodik für offene Problemidentifikation.' 
+                        : 'Dieser Prompt wurde basierend auf der UX-LLM Studie (IEEE Xplore: 11029918) entwickelt und integriert etablierte UX-Prinzipien wie Nielsen\'s Heuristiken und ISO 9241-110 Dialogprinzipien.'
                     }
                   </p>
                 </div>
@@ -878,14 +880,26 @@ ${variant === 'study-pure'
                 Prompt-Architektur
               </h4>
                   <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-                    <p><strong>Struktur:</strong> System-Prompt → Strukturierte Eingabe → Anweisungen → Custom Prompts</p>
-                    <p><strong>Wissenschaftliche Basis:</strong> 
-                      {variant === 'basic' 
-                        ? 'UX-LLM Studie (IEEE Xplore: 11029918) - Minimalistischer Ansatz' 
-                        : 'UX-LLM Studie, Nielsen\'s Heuristiken, ISO 9241-110'
+                    <p><strong>Struktur:</strong> 
+                      {variant === 'study-pure' 
+                        ? 'System-Prompt → Direkte User-Eingabe (originalgetreu ohne XML-Tags)' 
+                        : 'System-Prompt → Strukturierte Eingabe → Anweisungen → Custom Prompts'
                       }
                     </p>
-                    <p><strong>Anti-Halluzination:</strong> XML-Tags, Kategorisierung, Eingabe-Begrenzung</p>
+                    <p><strong>Wissenschaftliche Basis:</strong> 
+                      {variant === 'study-pure' 
+                        ? 'IEEE-Studie "Does GenAI Make Usability Testing Obsolete?" - Originalgetreue Replikation' 
+                        : variant === 'basic' 
+                          ? 'UX-LLM Studie (IEEE Xplore: 11029918) - Minimalistischer Ansatz' 
+                          : 'UX-LLM Studie, Nielsen\'s Heuristiken, ISO 9241-110'
+                      }
+                    </p>
+                    <p><strong>Anti-Halluzination:</strong> 
+                      {variant === 'study-pure' 
+                        ? 'Klare Aufgabendefinition, einfache Eingabestruktur' 
+                        : 'XML-Tags, Kategorisierung, Eingabe-Begrenzung'
+                      }
+                    </p>
                   </div>
             </div>
           </div>

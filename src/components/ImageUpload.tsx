@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Image as ImageIcon, Eye } from 'lucide-react'
 
 interface ImageUploadProps {
   onImageUpload: (imageUrl: string | null) => void
@@ -10,6 +10,28 @@ interface ImageUploadProps {
 }
 
 export default function ImageUpload({ onImageUpload, uploadedImage }: ImageUploadProps) {
+  const [showPreview, setShowPreview] = useState(false)
+  
+  // ESC key handler
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showPreview) {
+        setShowPreview(false)
+      }
+    }
+    
+    if (showPreview) {
+      document.addEventListener('keydown', handleEscape)
+      // Prevent scrolling when modal is open
+      document.body.style.overflow = 'hidden'
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'unset'
+    }
+  }, [showPreview])
+  
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
     if (file) {
@@ -32,6 +54,11 @@ export default function ImageUpload({ onImageUpload, uploadedImage }: ImageUploa
 
   const removeImage = () => {
     onImageUpload(null)
+  }
+
+  const handleImageClick = () => {
+    console.log('🖼️ Image clicked, opening preview')
+    setShowPreview(true)
   }
 
   return (
@@ -89,12 +116,22 @@ export default function ImageUpload({ onImageUpload, uploadedImage }: ImageUploa
           </div>
           
           {/* Image Preview */}
-          <div className="relative max-w-full overflow-hidden rounded-lg border border-border">
+          <div className="relative max-w-full overflow-hidden rounded-lg border border-border group">
             <img
               src={uploadedImage}
               alt="Uploaded screenshot"
-              className="max-w-full h-auto max-h-64 object-contain bg-background"
+              className="max-w-full h-auto max-h-64 object-contain bg-background cursor-pointer"
+              onClick={handleImageClick}
+              title="Klicken für Vollbildansicht"
             />
+            <div 
+              className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer"
+              onClick={handleImageClick}
+            >
+              <div className="bg-black/70 rounded-full p-2">
+                <Eye className="h-5 w-5 text-white" />
+              </div>
+            </div>
           </div>
           
           {/* Replace Button */}
@@ -105,6 +142,44 @@ export default function ImageUpload({ onImageUpload, uploadedImage }: ImageUploa
             Anderes Bild hochladen
           </button>
         </div>
+      )}
+      
+      {/* Fullscreen Preview Modal */}
+      {showPreview && uploadedImage && (
+        <>
+          {console.log('🔍 Modal rendering, showPreview:', showPreview, 'uploadedImage exists:', !!uploadedImage)}
+          <div 
+            className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4"
+            onClick={() => {
+              console.log('🔍 Modal background clicked, closing preview')
+              setShowPreview(false)
+            }}
+            style={{ zIndex: 9999 }}
+          >
+            <div className="relative max-w-[90vw] max-h-[90vh] bg-white rounded-lg overflow-hidden shadow-2xl">
+              <img
+                src={uploadedImage}
+                alt="Screenshot preview"
+                className="max-w-full max-h-full object-contain block"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={() => {
+                  console.log('🔍 Close button clicked')
+                  setShowPreview(false)
+                }}
+                className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 transition-colors z-10"
+                title="Schließen"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              {/* ESC key hint */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded text-sm">
+                ESC oder außerhalb klicken zum Schließen
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

@@ -20,7 +20,7 @@ export default function ProfileSelector({
   profiles, 
   onProfilesChange 
 }: ProfileSelectorProps) {
-  // Fallback model data in case imports fail
+  // Fallback model data in case imports fail - nur Vision-Modelle
   const FALLBACK_MODELS: LLMConfig[] = [
     {
       id: 'gpt-4o',
@@ -39,6 +39,15 @@ export default function ProfileSelector({
       requiresApiKey: true,
       supportsVision: true,
       modelId: 'claude-3-5-sonnet-20241022'
+    },
+    {
+      id: 'grok-beta',
+      name: 'Grok 4',
+      description: 'xAI\'s Grok 4 model with advanced reasoning and real-time information',
+      provider: 'grok',
+      requiresApiKey: true,
+      supportsVision: true,
+      modelId: 'grok-2-1212'
     }
   ]
 
@@ -67,6 +76,7 @@ export default function ProfileSelector({
       // Direct inline function to get available models with additional safety
       const models = Object.values(LLM_MODELS)
         .filter(config => config && typeof config === 'object')
+        .filter(config => config.supportsVision) // Nur Vision-Modelle anzeigen
         .map(config => ({
           id: config.id,
           name: config.name,

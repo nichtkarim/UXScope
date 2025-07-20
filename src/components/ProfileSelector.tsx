@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { User, Settings, Save, X, Key, CheckCircle, AlertCircle, Info, Trash2 } from 'lucide-react'
 import { Profile } from '@/types'
-import { llmModels } from '@/lib/constants'
-import { LLM_MODELS, validateApiKey } from '@/lib/llmProviders'
+import { LLM_MODELS, LLMConfig } from '@/lib/llmProviders'
 import { profileStorage } from '@/lib/storage'
 import NoSSR from './NoSSR'
 
@@ -21,9 +20,74 @@ export default function ProfileSelector({
   profiles, 
   onProfilesChange 
 }: ProfileSelectorProps) {
+  // Fallback model data in case imports fail
+  const FALLBACK_MODELS: LLMConfig[] = [
+    {
+      id: 'gpt-4o',
+      name: 'GPT-4o',
+      description: 'Advanced multimodal model with strong reasoning capabilities',
+      provider: 'openai',
+      requiresApiKey: true,
+      supportsVision: true,
+      modelId: 'gpt-4o'
+    },
+    {
+      id: 'claude-3-5-sonnet',
+      name: 'Claude 3.5 Sonnet',
+      description: 'High-performance model with excellent reasoning and multimodal capabilities',
+      provider: 'anthropic',
+      requiresApiKey: true,
+      supportsVision: true,
+      modelId: 'claude-3-5-sonnet-20241022'
+    }
+  ]
+
+  const [llmModels, setLlmModels] = useState<LLMConfig[]>([])
   const [isCreatingProfile, setIsCreatingProfile] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [showApiKeyHelp, setShowApiKeyHelp] = useState(false)
+
+  useEffect(() => {
+    try {
+      // Check if LLM_MODELS is available and is a proper object
+      if (!LLM_MODELS || typeof LLM_MODELS !== 'object' || LLM_MODELS === null) {
+        console.warn('LLM_MODELS is not available, using fallback models')
+        setLlmModels(FALLBACK_MODELS)
+        return
+      }
+
+      // Additional safety check - ensure LLM_MODELS has properties
+      const modelKeys = Object.keys(LLM_MODELS)
+      if (modelKeys.length === 0) {
+        console.warn('LLM_MODELS is empty, using fallback models')
+        setLlmModels(FALLBACK_MODELS)
+        return
+      }
+
+      // Direct inline function to get available models with additional safety
+      const models = Object.values(LLM_MODELS)
+        .filter(config => config && typeof config === 'object')
+        .map(config => ({
+          id: config.id,
+          name: config.name,
+          description: config.description,
+          supportsVision: config.supportsVision,
+          provider: config.provider,
+          requiresApiKey: config.requiresApiKey,
+          modelId: config.modelId
+        }))
+      
+      if (models.length === 0) {
+        console.warn('No valid models found in LLM_MODELS, using fallback models')
+        setLlmModels(FALLBACK_MODELS)
+      } else {
+        setLlmModels(models)
+      }
+    } catch (error) {
+      console.error('Error loading models:', error)
+      setLlmModels(FALLBACK_MODELS)
+    }
+  }, [])
   const [newProfile, setNewProfile] = useState<{
     name: string
     email: string
@@ -35,6 +99,24 @@ export default function ProfileSelector({
     selectedModel: 'gpt-4o',
     apiKey: ''
   })
+
+  // Lokale Implementierung der API-Key-Validierung
+  const validateApiKey = (provider: string, apiKey?: string): boolean => {
+    if (!apiKey) return false
+    
+    switch (provider) {
+      case 'openai':
+        return apiKey.startsWith('sk-') && apiKey.length > 20
+      case 'anthropic':
+        return apiKey.startsWith('sk-ant-') && apiKey.length > 20
+      case 'together':
+        return apiKey.length > 10 // Together API keys don't have a specific prefix
+      case 'local':
+        return true // Local models don't need API keys
+      default:
+        return false
+    }
+  }
 
   const validateProfile = (): boolean => {
     const errors: string[] = []
@@ -54,7 +136,7 @@ export default function ProfileSelector({
     }
     
     // API-Key-Validierung
-    const modelConfig = LLM_MODELS[newProfile.selectedModel]
+    const modelConfig = getModelConfig(newProfile.selectedModel)
     if (modelConfig?.requiresApiKey && !newProfile.apiKey.trim()) {
       errors.push('API-Key ist erforderlich für dieses Modell')
     } else if (modelConfig?.requiresApiKey && !validateApiKey(modelConfig.provider, newProfile.apiKey)) {
@@ -123,8 +205,28 @@ export default function ProfileSelector({
     }
   }
 
+  const getModelConfig = (modelId: string): LLMConfig | undefined => {
+    // Return undefined if modelId is invalid
+    if (!modelId || typeof modelId !== 'string') {
+      return undefined
+    }
+
+    // Try from imported LLM_MODELS first with safety checks
+    if (LLM_MODELS && typeof LLM_MODELS === 'object' && LLM_MODELS !== null && LLM_MODELS[modelId]) {
+      return LLM_MODELS[modelId]
+    }
+    
+    // Fallback to state models with safety checks
+    if (llmModels && Array.isArray(llmModels)) {
+      return llmModels.find(model => model && model.id === modelId)
+    }
+
+    // Final fallback - check our hardcoded fallback models
+    return FALLBACK_MODELS.find(model => model.id === modelId)
+  }
+
   const getApiKeyPlaceholder = (modelId: string): string => {
-    const config = LLM_MODELS[modelId]
+    const config = getModelConfig(modelId)
     if (!config) return 'API-Key eingeben'
     
     switch (config.provider) {
@@ -142,7 +244,7 @@ export default function ProfileSelector({
   }
 
   const getApiKeyHelp = (modelId: string): string => {
-    const config = LLM_MODELS[modelId]
+    const config = getModelConfig(modelId)
     if (!config) return ''
     
     switch (config.provider) {
@@ -160,14 +262,31 @@ export default function ProfileSelector({
   }
 
   const isApiKeyValid = (modelId: string, apiKey: string): boolean => {
-    const config = LLM_MODELS[modelId]
-    if (!config || !config.requiresApiKey) return true
+    // Return true if modelId is invalid (no validation needed)
+    if (!modelId || typeof modelId !== 'string') {
+      return true
+    }
+
+    const config = getModelConfig(modelId)
+    if (!config || config.requiresApiKey !== true) return true
+    
+    // Ensure apiKey is a string and provider exists
+    if (!apiKey || typeof apiKey !== 'string' || !config.provider) {
+      return false
+    }
+    
     return validateApiKey(config.provider, apiKey)
   }
 
   const requiresApiKey = (modelId: string): boolean => {
-    const config = LLM_MODELS[modelId]
-    return config?.requiresApiKey || false
+    // Return false if modelId is invalid
+    if (!modelId || typeof modelId !== 'string') {
+      return false
+    }
+
+    const config = getModelConfig(modelId)
+    // Return false if config is undefined or doesn't have requiresApiKey property
+    return config?.requiresApiKey === true
   }
 
   return (
@@ -191,7 +310,7 @@ export default function ProfileSelector({
             <option value="">Profil wählen...</option>
             {profiles.map((profile) => (
               <option key={profile.id} value={profile.id}>
-                {profile.name} ({llmModels.find(m => m.id === profile.selectedModel)?.name})
+                {profile.name} ({(llmModels && Array.isArray(llmModels) ? llmModels.find(m => m && m.id === profile.selectedModel)?.name : profile.selectedModel) || 'Unknown'})
               </option>
             ))}
           </select>
@@ -207,7 +326,16 @@ export default function ProfileSelector({
                 </h4>
                 <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <p><strong>E-Mail:</strong> {profiles.find(p => p.id === selectedProfile)?.email}</p>
-                  <p><strong>Modell:</strong> {llmModels.find(m => m.id === profiles.find(p => p.id === selectedProfile)?.selectedModel)?.name}</p>
+                  <p><strong>Modell:</strong> {
+                    (() => {
+                      const profile = profiles.find(p => p.id === selectedProfile)
+                      if (!profile) return 'Unknown'
+                      const modelName = llmModels && Array.isArray(llmModels) 
+                        ? llmModels.find(m => m && m.id === profile.selectedModel)?.name 
+                        : profile.selectedModel
+                      return modelName || profile.selectedModel || 'Unknown'
+                    })()
+                  }</p>
                   <p><strong>API-Key:</strong> {profiles.find(p => p.id === selectedProfile)?.apiKey ? '✓ Konfiguriert' : '✗ Nicht konfiguriert'}</p>
                 </div>
               </div>
@@ -289,15 +417,17 @@ export default function ProfileSelector({
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                 >
                   <option value="">LLM wählen...</option>
-                  {llmModels.map((model) => (
+                  {llmModels && Array.isArray(llmModels) ? llmModels.map((model) => (
                     <option key={model.id} value={model.id}>
-                      {model.name} {model.supportVision ? '🔍' : ''}
+                      {model.name} {model.supportsVision ? '🔍' : ''}
                     </option>
-                  ))}
+                  )) : (
+                    <option value="" disabled>Lade Modelle...</option>
+                  )}
                 </select>
-                {newProfile.selectedModel && (
+                {newProfile.selectedModel && llmModels && Array.isArray(llmModels) && (
                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {llmModels.find(m => m.id === newProfile.selectedModel)?.description}
+                    {llmModels.find(m => m && m.id === newProfile.selectedModel)?.description}
                   </p>
                 )}
               </div>

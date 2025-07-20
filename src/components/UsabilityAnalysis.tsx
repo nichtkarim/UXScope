@@ -10,6 +10,11 @@ interface UsabilityAnalysisProps {
   onReset?: () => void
   promptVariant?: PromptVariant
   promptUsed?: string
+  // Add structured findings from API
+  findings?: Array<{
+    category: string;
+    text: string;
+  }>
   metadata?: {
     llmModel: string
     llmName: string
@@ -34,7 +39,7 @@ interface ParsedSection {
   textPosition?: number
 }
 
-export default function UsabilityAnalysis({ analysis, isAnalyzing, onReset, promptVariant = 'advanced', promptUsed, metadata }: UsabilityAnalysisProps) {
+export default function UsabilityAnalysis({ analysis, isAnalyzing, onReset, promptVariant = 'advanced', promptUsed, findings, metadata }: UsabilityAnalysisProps) {
   
   // Bestimme die tatsächliche Prompt-Variante (Vorrang: Metadata)
   const variant = metadata?.promptVariant ?? promptVariant
@@ -330,6 +335,66 @@ ${variant === 'study-pure'
       severity: 'info'
     })
     
+    // If we have structured findings from the API, use those instead of parsing text
+    if (findings && findings.length > 0) {
+      console.log('🔍 Using structured findings from API:', findings.length)
+      
+      // Map API categories to frontend severities
+      const mapApiCategoryToSeverity = (category: string): string => {
+        const categoryUpper = category.toUpperCase();
+        if (categoryUpper === 'KATASTROPHAL' || categoryUpper === 'CATASTROPHIC') return 'catastrophic';
+        if (categoryUpper === 'KRITISCH' || categoryUpper === 'CRITICAL') return 'critical';
+        if (categoryUpper === 'ERNST' || categoryUpper === 'SERIOUS') return 'serious';
+        if (categoryUpper === 'GERING' || categoryUpper === 'MINOR') return 'minor';
+        if (categoryUpper === 'POSITIV' || categoryUpper === 'POSITIVE') return 'positive';
+        return 'minor'; // Default
+      }
+      
+      const categoryNames = {
+        catastrophic: 'Katastrophales Problem',
+        critical: 'Kritisches Problem',
+        serious: 'Ernstes Problem',
+        minor: 'Geringes Problem',
+        positive: 'Positiver Befund'
+      }
+      
+      // Group findings by severity first
+      const findingsBySeverity = {
+        positive: [] as typeof findings,
+        catastrophic: [] as typeof findings,
+        critical: [] as typeof findings,
+        serious: [] as typeof findings,
+        minor: [] as typeof findings
+      }
+      
+      findings.forEach((finding) => {
+        const severity = mapApiCategoryToSeverity(finding.category)
+        console.log(`🔍 Finding: ${finding.category} -> ${severity}`)
+        findingsBySeverity[severity as keyof typeof findingsBySeverity].push(finding)
+      })
+      
+      // Add sections in desired order: positive, catastrophic, critical, serious, minor
+      const orderedSeverities = ['positive', 'catastrophic', 'critical', 'serious', 'minor'] as const
+      
+      orderedSeverities.forEach(severity => {
+        const severityFindings = findingsBySeverity[severity]
+        severityFindings.forEach((finding, index) => {
+          sections.push({
+            type: severity,
+            title: `${categoryNames[severity]} ${index + 1}`,
+            content: [finding.text],
+            severity: severity,
+            textPosition: text.indexOf(finding.text)
+          })
+        })
+      })
+      
+      return sections
+    }
+    
+    // Fallback to text parsing if no structured findings available
+    console.log('🔍 No structured findings, falling back to text parsing')
+    
     // Split text into logical problem blocks instead of individual sentences
     const problemBlocks = text
       .split(/\n\s*\n|\r\n\s*\r\n/) // Split by double line breaks first
@@ -435,7 +500,7 @@ ${variant === 'study-pure'
       positive: categorizedFindings.filter(f => f.category === 'positive')
     }
     
-    // Add sections for each categorized finding - Make sure positive findings are processed first
+    // Add sections for each categorized finding - Sorted by severity: Positive first, then by severity descending
     const orderedCategories = ['positive', 'catastrophic', 'critical', 'serious', 'minor']
     
     orderedCategories.forEach(category => {
@@ -857,6 +922,20 @@ ${variant === 'study-pure'
               </div>
               
               <div 
+                className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 border border-emerald-200 dark:border-emerald-700 relative cursor-help"
+                onMouseEnter={(e) => handleTooltipShow('positive', e)}
+                onMouseLeave={handleTooltipHide}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-1">Positiv</p>
+                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{summary.positiveFindings}</p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-emerald-500" />
+                </div>
+              </div>
+              
+              <div 
                 className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-700 relative cursor-help"
                 onMouseEnter={(e) => handleTooltipShow('catastrophic', e)}
                 onMouseLeave={handleTooltipHide}
@@ -909,20 +988,6 @@ ${variant === 'study-pure'
                     <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{summary.minorProblems}</p>
                   </div>
                   <AlertCircle className="h-8 w-8 text-blue-500" />
-                </div>
-              </div>
-              
-              <div 
-                className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 border border-emerald-200 dark:border-emerald-700 relative cursor-help"
-                onMouseEnter={(e) => handleTooltipShow('positive', e)}
-                onMouseLeave={handleTooltipHide}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-1">Positiv</p>
-                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{summary.positiveFindings}</p>
-                  </div>
-                  <CheckCircle className="h-8 w-8 text-emerald-500" />
                 </div>
               </div>
             </div>

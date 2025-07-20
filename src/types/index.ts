@@ -1,10 +1,3 @@
-export interface LLMModel {
-  id: string
-  name: string
-  description: string
-  supportVision?: boolean
-}
-
 export interface Profile {
   id: string
   name: string

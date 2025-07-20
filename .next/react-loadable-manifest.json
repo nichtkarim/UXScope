@@ -4,5 +4,23 @@
     "files": [
       "static/chunks/_app-pages-browser_node_modules_next_dist_client_dev_noop-turbopack-hmr_js.js"
     ]
+  },
+  "lib\\llmProviders.ts -> @anthropic-ai/sdk": {
+    "id": "lib\\llmProviders.ts -> @anthropic-ai/sdk",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_anthropic-ai_sdk_index_mjs.js"
+    ]
+  },
+  "lib\\llmProviders.ts -> openai": {
+    "id": "lib\\llmProviders.ts -> openai",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_openai_index_mjs.js"
+    ]
+  },
+  "lib\\llmProviders.ts -> together-ai": {
+    "id": "lib\\llmProviders.ts -> together-ai",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_together-ai_index_mjs.js"
+    ]
   }
 }

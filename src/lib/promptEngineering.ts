@@ -127,6 +127,11 @@ ${userInput}`
     // Benutzerdefinierte Prompt einbinden, falls vorhanden
     const customInstructions = customPrompt ? this.formatCustomPrompt(customPrompt, language) : ''
     
+    // Explizite Anweisung für variierende Schweregrade hinzufügen
+    const diversityPrompt = language === 'en' 
+      ? `\n\n🔥 CRITICAL INSTRUCTION: You MUST use different severity levels! Do not categorize everything as [MINOR]. Use [CATASTROPHIC], [CRITICAL], [SERIOUS], [MINOR], and [POSITIVE] based on realistic user impact. If you only use [MINOR], your analysis will be rejected.`
+      : `\n\n🔥 KRITISCHE ANWEISUNG: Du MUSST verschiedene Schweregrade verwenden! Kategorisiere NICHT alles als [GERING]. Verwende [KATASTROPHAL], [KRITISCH], [ERNST], [GERING] und [POSITIV] basierend auf realistischer Nutzerauswirkung. Wenn du nur [GERING] verwendest, wird deine Analyse abgelehnt.`
+
     const finalPrompt = `${systemPrompt}
 
 ${examples}
@@ -135,7 +140,7 @@ ${structuredInput}
 
 ${instructions}
 
-${customInstructions}`
+${customInstructions}${diversityPrompt}`
 
     console.log('🔍 PromptEngineer Debug - Final prompt length:', finalPrompt.length)
     console.log('🔍 PromptEngineer Debug - Final prompt preview (first 200 chars):', finalPrompt.substring(0, 200) + '...')
@@ -457,13 +462,15 @@ Focus on the most important and effective usability problems that real users wou
 Describe each problem in a separate paragraph with an empty line between problems. Use domain-specific language and avoid technical terminology.
 
 ## IMPORTANT: Categorization of Findings
-Each finding MUST begin with one of the following assessments:
+Each finding MUST begin with one of the following assessments. Use the full range of severity levels:
 
-**[CATASTROPHIC]** - Severe problems that make the app unusable
-**[CRITICAL]** - Serious problems that strongly impair usability
-**[SERIOUS]** - Significant problems that worsen user experience
-**[MINOR]** - Smaller problems with minor effects
-**[POSITIVE]** - Positive aspects of the user interface
+**[CATASTROPHIC]** - App is completely unusable, basic functions are missing or broken
+**[CRITICAL]** - Serious problems that cause major user frustration or task abandonment
+**[SERIOUS]** - Significant impairment of user experience, but tasks are still achievable
+**[MINOR]** - Small inconveniences that slightly reduce efficiency
+**[POSITIVE]** - Well-designed aspects that improve the user experience
+
+IMPORTANT: Use different severity levels! Rate realistically based on actual user impact.
 
 Example: **[CRITICAL]** Missing visual feedback makes users uncertain about their interactions.`
     }
@@ -473,13 +480,15 @@ Example: **[CRITICAL]** Missing visual feedback makes users uncertain about thei
 Beschreibe jedes Problem in einem separaten Absatz mit einer Leerzeile zwischen den Problemen. Verwende domänenspezifische Sprache und vermeide technische Terminologie.
 
 ## WICHTIG: Kategorisierung der Befunde
-Jeder Befund MUSS mit einer der folgenden Bewertungen beginnen:
+Jeder Befund MUSS mit einer der folgenden Bewertungen beginnen. Nutze die volle Bandbreite der Schweregrade:
 
-**[KATASTROPHAL]** - Schwerwiegende Probleme, die die App unbrauchbar machen
-**[KRITISCH]** - Schwere Probleme, die die Nutzerfreundlichkeit stark beeinträchtigen
-**[ERNST]** - Erhebliche Probleme, die die Nutzererfahrung verschlechtern
-**[GERING]** - Kleinere Probleme mit geringfügigen Auswirkungen
-**[POSITIV]** - Positive Aspekte der Benutzeroberfläche
+**[KATASTROPHAL]** - App ist völlig unbrauchbar, grundlegende Funktionen fehlen oder funktionieren nicht
+**[KRITISCH]** - Schwere Probleme, die Nutzer stark frustrieren oder zum Abbruch führen
+**[ERNST]** - Deutliche Beeinträchtigung der Nutzererfahrung, aber Aufgaben sind noch erfüllbar
+**[GERING]** - Kleinere Unannehmlichkeiten, die die Effizienz leicht reduzieren
+**[POSITIV]** - Gut gestaltete Aspekte, die das Nutzererlebnis verbessern
+
+WICHTIG: Verwende verschiedene Schweregrade! Bewerte realistisch basierend auf der tatsächlichen Nutzerauswirkung.
 
 Beispiel: **[KRITISCH]** Fehlendes visuelles Feedback macht Nutzer unsicher über ihre Interaktionen.`
   }
@@ -615,13 +624,15 @@ Konzentriere dich auf Probleme, die **echte Nutzer in realen Situationen** beein
 - **Keine Code-Details oder technische Terminologie erwähnen**
 
 ## WICHTIG: Kategorisierung der Befunde
-Jeder Befund MUSS mit einer der folgenden Bewertungen beginnen:
+Jeder Befund MUSS mit einer der folgenden Bewertungen beginnen. Verwende die volle Bandbreite der Kategorien basierend auf der tatsächlichen Auswirkung auf Nutzer:
 
-**[KATASTROPHAL]** - Existenzielle Bedrohungen, es besteht die Gefahr eines größeren Schadens für den Benutzer oder die Organisation. Diese Bewertung sollte nur nach Rücksprache mit dem Management vergeben werden, keinesfalls durch den UX Professional allein.
-**[KRITISCH]** - Die Testteilnehmer haben aufgegeben oder sind sehr unzufrieden, oder es besteht die Gefahr eines geringfügigen Schadens für den Benutzer
-**[ERNST]** - Erhebliche Verzögerungen oder mäßige Unzufriedenheit
-**[GERING]** - Spürbare Verzögerungen oder geringe Unzufriedenheit
-**[POSITIV]** - Etwas, das im Rahmen des aktuellen Usability-Tests gut funktioniert hat oder den Testteilnehmern gefallen hat
+**[KATASTROPHAL]** - App ist völlig unbrauchbar, Nutzer können grundlegende Aufgaben nicht erfüllen (z.B. Login unmöglich, App stürzt ab, kritische Funktionen fehlen komplett)
+**[KRITISCH]** - Schwerwiegende Probleme, die Nutzer stark frustrieren oder zum Abbruch führen (z.B. versteckte wichtige Buttons, verwirrende Navigation, unverständliche Fehlermeldungen)
+**[ERNST]** - Deutliche Beeinträchtigung der Nutzererfahrung, aber Aufgaben sind noch erfüllbar (z.B. lange Ladezeiten, unintuitives Design, schwer findbare Funktionen)
+**[GERING]** - Kleinere Unannehmlichkeiten, die die Effizienz leicht reduzieren (z.B. suboptimale Textstile, leichte Inkonsistenzen, verbesserungswürdige Details)
+**[POSITIV]** - Gut gestaltete Aspekte, die das Nutzererlebnis verbessern (z.B. klare Struktur, hilfreiche Feedback-Mechanismen, ansprechendes Design)
+
+WICHTIG: Nutze verschiedene Schweregrade! Nicht alle Probleme sind "gering" - bewerte realistisch basierend auf der Nutzerauswirkung.
 
 Beispiel für korrektes Format:
 **[KRITISCH]** Fehlende Interaktionshinweise machen es für Nutzer schwierig zu verstehen, welche Elemente anklickbar sind, was dazu führt, dass Testteilnehmer aufgeben.
@@ -762,48 +773,36 @@ ${appContext.sourceCode || '[No source code provided]'}`
   private static getExamples(language: 'de' | 'en' = 'de'): string {
     if (language === 'de') {
       return `<examples>
-**Beispiel eines validen Usability-Problems (basierend auf UX-LLM Forschung):**
+**Beispiele für korrekte Kategorisierung verschiedener Schweregrade:**
 
-"Unzureichender Kontrast zwischen Text und Hintergrundfarbe: Der gelbe Hintergrund mit weißem Text bei den Kategorie-Buttons bietet möglicherweise nicht genügend Kontrast für Nutzer mit Sehbehinderungen oder bei hellem Licht."
+**[KATASTROPHAL]** Login-Button ist völlig unsichtbar und nicht funktionsfähig. Nutzer können sich nicht anmelden und die App ist somit unbrauchbar.
 
-**Beispiel eines Interaktionsproblems:**
+**[KRITISCH]** Fehlende visuelles Feedback bei kritischen Aktionen wie "Kauf abschließen" führt dazu, dass Nutzer unsicher sind und den Vorgang abbrechen.
 
-"Fehlendes visuelles Feedback beim Button-Druck: Die Kategorie-Buttons scheinen kein visuelles Feedback beim Antippen zu haben, was Nutzer unsicher machen könnte, ob ihre Eingabe registriert wurde."
+**[ERNST]** Navigation zwischen Bildschirmen ist verwirrend und unintuitiv, was zu längeren Suchzeiten und mäßiger Nutzerfrustration führt.
 
-**Beispiel eines Navigationsproblems:**
+**[GERING]** Schriftgröße in der Fußzeile ist etwas klein, beeinträchtigt aber die Hauptfunktionen nicht wesentlich.
 
-"Fehlende klare Navigationshinweise: Es gibt keine klare Anzeige, wie nach einer Auswahl zur nächsten Frage fortgefahren werden kann, was zu Nutzerverwirrung führen könnte."
+**[POSITIV]** Klare Farbcodierung und konsistente Symbole unterstützen eine intuitive Bedienung und wurden von Testteilnehmern positiv bewertet.
 
-**Beispiel eines Barrierefreiheitsproblems:**
-
-"Unzureichende Touch-Targets: Der Button könnte eine unzureichende Touch-Target-Größe haben, was es für Nutzer schwierig machen könnte, präzise zu tippen, besonders auf kleineren Bildschirmen."
-
-**Beispiel eines Verständlichkeitsproblems:**
-
-"Mehrdeutige Fortschrittsanzeige: Die Fortschrittsleiste hat keine Beschriftung oder Anzeige dessen, was sie repräsentiert, was zu Verwirrung über den Nutzerfortschritt führen könnte."
+**WICHTIG: Verwende diese vollständige Bandbreite von Kategorien in deiner Analyse!**
 </examples>`
     }
     
     return `<examples>
-**Example of a valid usability problem (based on UX-LLM research):**
+**Examples of correct categorization across different severity levels:**
 
-"Insufficient contrast between text and background color: The yellow background with white text on the category buttons may not provide enough contrast for users with visual impairments or when viewing in bright light conditions."
+**[CATASTROPHIC]** Login button is completely invisible and non-functional. Users cannot log in and the app is therefore unusable.
 
-**Example of an interaction problem:**
+**[CRITICAL]** Missing visual feedback for critical actions like "Complete Purchase" causes users to be uncertain and abandon the process.
 
-"No visual feedback on button press: The category buttons do not appear to have any visual feedback when tapped, which could leave users uncertain whether their input has been registered."
+**[SERIOUS]** Navigation between screens is confusing and unintuitive, leading to longer search times and moderate user frustration.
 
-**Example of a navigation problem:**
+**[MINOR]** Font size in the footer is somewhat small, but does not significantly impact main functions.
 
-"Lack of clear navigation cues: There is no clear indication of how to proceed to the next question after a selection is made, which could lead to user confusion."
+**[POSITIVE]** Clear color coding and consistent icons support intuitive operation and were positively rated by test participants.
 
-**Example of an accessibility problem:**
-
-"Inadequate touch targets: The button may have an inadequate touch target size, which could make it difficult for users to tap accurately, especially on devices with smaller screens."
-
-**Example of a comprehensibility problem:**
-
-"Ambiguous progress bar: The progress bar does not have a label or any indication of what it represents, which could lead to confusion about the user's progress."
+**IMPORTANT: Use this full range of categories in your analysis!**
 </examples>`
   }
 

@@ -37,18 +37,27 @@ export default function Home() {
   const [llmAnalyses, setLlmAnalyses] = useState<LLMAnalysis[]>([])
   const [groundTruth, setGroundTruth] = useState<UsabilityProblem[]>([])
   const [currentAnalysisMetadata, setCurrentAnalysisMetadata] = useState<any>(null)
+  // Add state for structured findings from API
+  const [currentAnalysisFindings, setCurrentAnalysisFindings] = useState<any[]>([])
 
   // Profile aus localStorage laden
   useEffect(() => {
     const storedProfiles = profileStorage.getProfiles()
-    if (storedProfiles.length > 0) {
-      setProfiles(storedProfiles)
+    
+    // Prüfe ob gespeicherte Profile gültige Model-IDs haben
+    const validModelIds = ['gpt-4o', 'gpt-4o-mini', 'claude-3-5-sonnet', 'claude-3-haiku']
+    const validProfiles = storedProfiles.filter(profile => 
+      profile.selectedModel && validModelIds.includes(profile.selectedModel)
+    )
+    
+    if (validProfiles.length > 0) {
+      setProfiles(validProfiles)
     } else {
       // Fallback auf Demo-Profile für wissenschaftliche LLMs
       const defaultProfiles = [
-        { id: '1', name: 'GPT-4o Researcher', email: 'gpt4o@research.com', selectedModel: 'gpt4o', apiKey: 'DEMO_KEY_GPT4O', createdAt: new Date('2024-01-01') },
-        { id: '2', name: 'Claude 4 Researcher', email: 'claude4@research.com', selectedModel: 'claude4', apiKey: 'DEMO_KEY_CLAUDE4', createdAt: new Date('2024-01-01') },
-        { id: '3', name: 'Llama 3 Researcher', email: 'llama3@research.com', selectedModel: 'llama3', apiKey: 'DEMO_KEY_LLAMA3', createdAt: new Date('2024-01-01') },
+        { id: '1', name: 'GPT-4o Researcher', email: 'gpt4o@research.com', selectedModel: 'gpt-4o', apiKey: 'DEMO_KEY_GPT4O', createdAt: new Date('2024-01-01') },
+        { id: '2', name: 'Claude 3.5 Researcher', email: 'claude@research.com', selectedModel: 'claude-3-5-sonnet', apiKey: 'DEMO_KEY_CLAUDE', createdAt: new Date('2024-01-01') },
+        { id: '3', name: 'GPT-4o Mini Researcher', email: 'gpt4omini@research.com', selectedModel: 'gpt-4o-mini', apiKey: 'DEMO_KEY_GPT4OMINI', createdAt: new Date('2024-01-01') },
       ]
       setProfiles(defaultProfiles)
       // Speichere Demo-Profile explizit
@@ -101,9 +110,25 @@ export default function Home() {
       return
     }
 
+    console.log('🔍 Selected Profile:', {
+      ...selectedProfile,
+      apiKey: selectedProfile.apiKey ? '[REDACTED]' : 'NOT_SET'
+    })
+
     if (!selectedProfile.apiKey || selectedProfile.apiKey.trim() === '') {
       alert('Das ausgewählte Profil hat keinen API-Key. Bitte erstellen Sie ein neues Profil mit einem gültigen API-Key.')
       return
+    }
+
+    // Warnung für Demo-API-Keys
+    if (selectedProfile.apiKey.startsWith('DEMO_KEY_')) {
+      const shouldContinue = confirm(
+        'Sie verwenden einen Demo-API-Key. Die Analyse wird fehlschlagen. ' +
+        'Möchten Sie trotzdem fortfahren, um den API-Aufruf zu testen?'
+      )
+      if (!shouldContinue) {
+        return
+      }
     }
 
     if (!uploadedImage) {
@@ -135,42 +160,95 @@ export default function Home() {
         hasImage: !!uploadedImage
       })
 
+      const requestBody = {
+        userProfile: selectedProfile,
+        image: uploadedImage,
+        context: {
+          description: contextData.description,
+          uiCode: contextData.uiCode || '',
+          userTask: contextData.userTask || 'Allgemeine Nutzung der Anwendung',
+          viewName: 'Hauptansicht',
+          customPrompt: contextData.customPrompt || '',
+          promptVariant: contextData.promptVariant || 'advanced',
+          language: promptLanguage,
+          uiMode: contextData.uiMode || 'generalized'
+        },
+      }
+
+      console.log('🔍 Sending request to API:', {
+        userProfile: {
+          ...selectedProfile,
+          apiKey: selectedProfile.apiKey ? '[REDACTED]' : 'NOT_SET'
+        },
+        hasImage: !!uploadedImage,
+        context: requestBody.context
+      })
+
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userProfile: selectedProfile,
-          image: uploadedImage,
-          context: {
-            description: contextData.description,
-            uiCode: contextData.uiCode || '',
-            userTask: contextData.userTask || 'Allgemeine Nutzung der Anwendung',
-            viewName: 'Hauptansicht',
-            customPrompt: contextData.customPrompt || '',
-            promptVariant: contextData.promptVariant || 'advanced',
-            language: promptLanguage,
-            uiMode: contextData.uiMode || 'generalized'
-          },
-        }),
+        body: JSON.stringify(requestBody),
       })
 
+      console.log('Response status:', response.status)
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }))
-        const errorMessage = errorData?.error || 'Fehler bei der Analyse'
+        let errorData
+        let errorMessage = 'Unbekannter Fehler'
+        
+        try {
+          const responseText = await response.text()
+          console.log('Raw response text:', responseText.substring(0, 500) + '...')
+          
+          // Try to parse as JSON first
+          try {
+            errorData = JSON.parse(responseText)
+            errorMessage = errorData?.error || `HTTP ${response.status}: ${response.statusText}`
+          } catch (jsonError) {
+            // If not JSON, it might be HTML error page
+            if (responseText.includes('Internal Server Error') || responseText.includes('<html')) {
+              errorMessage = `Server Error (${response.status}): Internal Server Error`
+            } else {
+              errorMessage = `HTTP ${response.status}: ${response.statusText}`
+            }
+          }
+        } catch (textError) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`
+          console.error('Failed to read response text:', textError)
+        }
         
         if (response.status === 401) {
           alert('API-Key ist ungültig. Bitte überprüfen Sie Ihren API-Key in den Profileinstellungen.')
         } else if (response.status === 429) {
           alert('Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.')
+        } else if (response.status === 500) {
+          alert('Server-Fehler. Bitte überprüfen Sie die Konsole für weitere Details und versuchen Sie es erneut.')
         } else {
           alert(`Fehler bei der Analyse: ${errorMessage}`)
         }
         
-        console.error('API Error:', { status: response.status, error: errorMessage })
+        console.error('API Error Details:', { 
+          status: response.status, 
+          statusText: response.statusText,
+          error: errorMessage,
+          errorData: errorData,
+          url: response.url
+        })
         return // Exit gracefully instead of throwing
       }
 
-      const data = await response.json()
+      const responseText = await response.text()
+      console.log('Response text preview:', responseText.substring(0, 200) + '...')
+      
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError)
+        console.error('Response text:', responseText)
+        throw new Error('Server returned invalid JSON response')
+      }
       
       if (!data.analysis) {
         throw new Error('Keine Analyse-Daten erhalten')
@@ -178,16 +256,21 @@ export default function Home() {
       
       setAnalysis(data.analysis)
       setCurrentAnalysisMetadata(data.metadata)
+      setCurrentAnalysisFindings(data.findings || []) // Set structured findings
       
       // Speichere LLM-Analyse für wissenschaftliche Auswertung
-      if (data.metadata) {
+      if (data.analyses && data.analyses.length > 0) {
+        // Verwende die strukturierten Analysen aus der API
+        setLlmAnalyses(prev => [...prev.filter(a => a.llmId !== selectedProfile.selectedModel), ...data.analyses])
+      } else if (data.metadata) {
+        // Fallback für alte API-Struktur
         const newLLMAnalysis: LLMAnalysis = {
           llmId: selectedProfile.selectedModel,
-          llmName: selectedProfile.selectedModel,
+          llmName: data.metadata.llmName || selectedProfile.selectedModel,
           problems: [], // Würde in einer vollständigen Implementierung aus der Antwort geparst
           analysisTime: new Date(),
           promptUsed: data.metadata.promptUsed,
-          rawResponse: data.rawResponse || data.analysis
+          rawResponse: data.rawAnalysis || data.analysis
         }
         
         setLlmAnalyses(prev => [...prev.filter(a => a.llmId !== selectedProfile.selectedModel), newLLMAnalysis])
@@ -202,6 +285,12 @@ export default function Home() {
       })
       
     } catch (error) {
+      // Fehlerbehandlung für Netzwerkfehler (z.B. Server nicht erreichbar)
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        alert('Verbindung zur API fehlgeschlagen. Ist der Server gestartet? Läuft Next.js auf dem richtigen Port?')
+        console.error('Netzwerkfehler beim API-Aufruf:', error)
+        return
+      }
       console.error('Analysis Error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler'
       alert(`Es gab ein Problem bei der Analyse: ${errorMessage}. Bitte versuchen Sie es erneut.`)
@@ -216,6 +305,7 @@ export default function Home() {
     setContextData({ description: '', uiCode: '', userTask: '', customPrompt: '', promptVariant: 'advanced', uiMode: 'generalized' })
     setSelectedProfileId('')
     setCurrentAnalysisMetadata(null)
+    setCurrentAnalysisFindings([]) // Reset findings
   }
 
   const handleLoadFromHistory = (historyItem: any) => {
@@ -473,6 +563,7 @@ export default function Home() {
                     promptVariant={contextData.promptVariant}
                     promptUsed={currentAnalysisMetadata?.promptUsed}
                     metadata={currentAnalysisMetadata}
+                    findings={currentAnalysisFindings} // Pass findings to UsabilityAnalysis
                   />
                 </div>
               </div>

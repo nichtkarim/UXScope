@@ -141,7 +141,7 @@ Geben Sie die API-Keys direkt in der Anwendung beim Erstellen eines Profils ein.
 
 Eine funktionsfähige Version der Anwendung ist verfügbar unter:
 
-**[UXScope Live-Demo](https://nichtkarim.github.io/Bachelorprojekt/)**
+**[UXScope Live-Demo](https://bachelorprojekt-seven.vercel.app/)**
 
 *Hinweis: Für die Live-Demo benötigen Sie eigene API-Keys der jeweiligen Anbieter.*
 

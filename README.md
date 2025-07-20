@@ -1,6 +1,8 @@
-# Bachelorprojekt: LLM-basierte Usability-Evaluation
+# UXScope - LLM-basierte Usability-Analyse
 
-Dieses Projekt ist eine Next.js-Anwendung zur Durchführung von Usability-Analysen mithilfe von großen Sprachmodellen (LLMs).
+**Eine Untersuchung der Fähigkeiten von Large Language Models (LLMs) zur automatisierten Erkennung und Bewertung von Usability in digitalen Anwendungen**
+
+UXScope ist eine Next.js-Anwendung zur automatisierten Durchführung von Usability-Analysen mithilfe von großen Sprachmodellen wie GPT-4o, Claude und Grok.
 
 ## Live-Anwendung
 

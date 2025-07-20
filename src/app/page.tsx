@@ -328,14 +328,11 @@ export default function Home() {
                 </button>
               </div>
               <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                LLM-basierte Usability-Evaluation
+                UXScope
               </h1>
               <p className="text-xl text-gray-600 dark:text-gray-400">
-                Wissenschaftliche Methodik zur Usability-Bewertung digitaler Anwendungen
+                Eine Untersuchung der Fähigkeiten von Large Language Models (LLMs) zur automatisierten Erkennung und Bewertung von Usability in digitalen Anwendungen
               </p>
-              <div className="mt-2 text-sm text-gray-500 dark:text-gray-500">
-                Bachelorarbeit: Vergleich von GPT-4o, Claude 4 und Llama 3
-              </div>
             </header>
 
           {/* Sprach-Toggle Hinweis */}

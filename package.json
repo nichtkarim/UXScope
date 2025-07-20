@@ -1,5 +1,5 @@
 {
-  "name": "usability-tester",
+  "name": "uxscope",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -13,11 +13,13 @@
     "testing",
     "ui",
     "ux",
-    "llm"
+    "llm",
+    "automation",
+    "analysis"
   ],
   "author": "",
   "license": "ISC",
-  "description": "Modern web application for usability testing with LLM integration",
+  "description": "Automatisierte Erkennung und Bewertung von Usability-Problemen mittels Large Language Models",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.56.0",
     "@types/node": "^24.0.10",

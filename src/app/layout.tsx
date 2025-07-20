@@ -4,8 +4,8 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Usability Tester - LLM-powered UX Analysis',
-  description: 'Modern web application for usability testing with LLM integration following ISO human-centered design standards',
+  title: 'UXScope - LLM-basierte Usability-Analyse',
+  description: 'Automatisierte Erkennung und Bewertung von Usability-Problemen in digitalen Anwendungen mittels Large Language Models',
 }
 
 export default function RootLayout({

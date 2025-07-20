@@ -299,7 +299,7 @@ Dieses Projekt ist für akademische und Forschungszwecke entwickelt worden. Die 
 
 ## Kontakt
 
-Für Fragen zur wissenschaftlichen Arbeit oder technischen Implementierung stehen wir gerne zur Verfügung.
+Für Fragen zur wissenschaftlichen Arbeit oder technischen Implementierung stehe ich gerne zur Verfügung.
 
 ---
 

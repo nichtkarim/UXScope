@@ -1,6 +1,6 @@
 'use client'
 
-import { FileText, Code, Target, Brain } from 'lucide-react'
+import { FileText, Code, Target, Brain, Zap, Cpu, Layers } from 'lucide-react'
 import { PromptVariant, UITechnologyMode } from '@/lib/promptEngineering'
 
 interface ContextData {
@@ -288,70 +288,65 @@ export default function ContextForm({ contextData, onContextChange }: ContextFor
               <li>• Nielsen-Heuristiken Integration</li>
               <li>• Sprache via Toggle wählbar (DE/EN)</li>
             </ul>
-          </div>
-        </div>
-        
-        {/* UI Technology Mode Selection - nur bei STUDY-PURE anzeigen */}
-        {contextData.promptVariant === 'study-pure' && (
-          <div className="mt-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Brain className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Analysemodus
-              </label>
-            </div>
-            <div className="flex items-center gap-3">
-              <label className="inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={contextData.uiMode === 'generalized'}
-                  onChange={(e) => handleUIModeChange(e.target.checked ? 'generalized' : 'swiftui-only')}
-                  className="sr-only"
-                />
-                <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  contextData.uiMode === 'generalized' 
-                    ? 'bg-purple-600' 
-                    : 'bg-gray-300 dark:bg-gray-600'
-                }`}>
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    contextData.uiMode === 'generalized' ? 'translate-x-6' : 'translate-x-1'
-                  }`} />
-                </div>
-                <span className="ml-3 text-sm font-medium text-gray-900 dark:text-white">
-                  Technologieunabhängige Analyse
-                </span>
-              </label>
-            </div>
-            <div className="mt-2">
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="text-xs text-blue-700 dark:text-blue-300">
-                  <p className="font-medium mb-1">
-                    {contextData.uiMode === 'generalized' ? '✓ Technologieunabhängig' : '✓ SwiftUI-spezifisch (Original)'}
-                  </p>
-                  <p>
-                    {contextData.uiMode === 'generalized' 
-                      ? 'Das LLM wird als Experte für verschiedene UI-Technologien (SwiftUI, React, Flutter, HTML/CSS) eingesetzt. Erweiterte Anwendbarkeit für moderne Multi-Platform-Entwicklung.'
-                      : 'Exakte Replikation der ursprünglichen Forschungsstudie mit Fokus auf iOS/SwiftUI-Apps. Direkte Vergleichbarkeit mit publizierten Ergebnissen.'
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div className="mt-2 space-y-2">
-          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Target className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-              <div className="text-xs text-yellow-700 dark:text-yellow-300">
-                <p className="font-medium mb-1">A/B/C Analysemethoden-Vergleich:</p>
-                <p>Diese Einstellung ermöglicht den Vergleich zwischen drei wissenschaftlich fundierten Analysemethoden. 
-                   Testen Sie alle Varianten mit identischen Eingaben, um die Unterschiede zu verstehen und empirische Daten für Ihre Forschung zu sammeln.</p>
-              </div>
-            </div>
-          </div>
+          </div>        </div>
+      </div>
 
+      {/* UI-Technologie-Modus - nur bei STUDY-PURE anzeigen */}
+      {contextData.promptVariant === 'study-pure' && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Zap className="h-4 w-4 text-red-600 dark:text-red-400" />
+            <label className="text-sm font-medium text-gray-900 dark:text-white">
+              UI-Technologie-Modus
+            </label>
+          </div>
+          
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <span className={`text-sm font-medium ${contextData.uiMode === 'swiftui-only' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                SwiftUI-Only
+              </span>
+              
+              <button
+                type="button"
+                onClick={() => handleUIModeChange(contextData.uiMode === 'swiftui-only' ? 'generalized' : 'swiftui-only')}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
+                  contextData.uiMode === 'generalized' 
+                    ? 'bg-red-600' 
+                    : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    contextData.uiMode === 'generalized' ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              
+              <span className={`text-sm font-medium ${contextData.uiMode === 'generalized' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                Technologie-unabhängig
+              </span>
+            </div>
+          </div>
+          
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+            {contextData.uiMode === 'swiftui-only' 
+              ? 'Originalgetreue IEEE-Studie für iOS/SwiftUI-Apps'
+              : 'Erweiterte Analyse für alle UI-Technologien'
+            }
+          </p>
+        </div>
+      )}
+
+      {/* A/B/C Testing Info - moved down */}
+      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+        <div className="flex items-start gap-2">
+          <Target className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-yellow-700 dark:text-yellow-300">
+            <p className="font-medium mb-1">A/B/C Analysemethoden-Vergleich:</p>
+            <p>Diese Einstellung ermöglicht den Vergleich zwischen drei wissenschaftlich fundierten Analysemethoden. 
+               Testen Sie alle Varianten mit identischen Eingaben, um die Unterschiede zu verstehen und empirische Daten für Ihre Forschung zu sammeln.</p>
+          </div>
         </div>
       </div>
 

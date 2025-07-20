@@ -115,7 +115,7 @@ ${userInput}`
       : this.getAdvancedSystemPrompt(language)
     
     const structuredInput = this.formatStructuredInput(appContext, variant, language)
-    const examples = includeExamples ? this.getExamples(language) : ''
+    const examples = includeExamples ? this.getExamples(language, variant) : ''
     const instructions = variant === 'basic'
       ? this.getBasicInstructions(language)
       : this.getAdvancedInstructions(language)
@@ -457,17 +457,13 @@ Focus on the most important and effective usability problems that real users wou
 Describe each problem in a separate paragraph with an empty line between problems. Use domain-specific language and avoid technical terminology.
 
 ## IMPORTANT: Categorization of Findings
-Each finding MUST begin with one of the following assessments. Use the full range of severity levels:
+Each finding MUST begin with one of the following assessments:
 
-**[CATASTROPHIC]** - App is completely unusable, basic functions are missing or broken
-**[CRITICAL]** - Serious problems that cause major user frustration or task abandonment
-**[SERIOUS]** - Significant impairment of user experience, but tasks are still achievable
-**[MINOR]** - Small inconveniences that slightly reduce efficiency
-**[POSITIVE]** - Well-designed aspects that improve the user experience
-
-IMPORTANT: Use different severity levels! Rate realistically based on actual user impact.
-
-Example: **[CRITICAL]** Missing visual feedback makes users uncertain about their interactions.`
+**[CATASTROPHIC]** - Very large damage possible, only clarify with management.
+**[CRITICAL]** - Users give up or are very dissatisfied, minor damage possible.
+**[SERIOUS]** - Significant delays or noticeable dissatisfaction.
+**[MINOR]** - Small delays or slight dissatisfaction.
+**[POSITIVE]** - Works well or is well received.`
     }
     
     return `Analysiere die bereitgestellte App-Ansicht und identifiziere Usability-Probleme. Konzentriere dich auf Probleme, die echte Nutzer in tatsächlichen Nutzungsszenarien beeinträchtigen würden.
@@ -475,17 +471,13 @@ Example: **[CRITICAL]** Missing visual feedback makes users uncertain about thei
 Beschreibe jedes Problem in einem separaten Absatz mit einer Leerzeile zwischen den Problemen. Verwende domänenspezifische Sprache und vermeide technische Terminologie.
 
 ## WICHTIG: Kategorisierung der Befunde
-Jeder Befund MUSS mit einer der folgenden Bewertungen beginnen. Nutze die volle Bandbreite der Schweregrade:
+Jeder Befund MUSS mit einer der folgenden Bewertungen beginnen:
 
-**[KATASTROPHAL]** - App ist völlig unbrauchbar, grundlegende Funktionen fehlen oder funktionieren nicht
-**[KRITISCH]** - Schwere Probleme, die Nutzer stark frustrieren oder zum Abbruch führen
-**[ERNST]** - Deutliche Beeinträchtigung der Nutzererfahrung, aber Aufgaben sind noch erfüllbar
-**[GERING]** - Kleinere Unannehmlichkeiten, die die Effizienz leicht reduzieren
-**[POSITIV]** - Gut gestaltete Aspekte, die das Nutzererlebnis verbessern
-
-WICHTIG: Verwende verschiedene Schweregrade! Bewerte realistisch basierend auf der tatsächlichen Nutzerauswirkung.
-
-Beispiel: **[KRITISCH]** Fehlendes visuelles Feedback macht Nutzer unsicher über ihre Interaktionen.`
+**[KATASTROPHAL]** - Sehr großer Schaden möglich, nur mit Management abklären.
+**[KRITISCH]** - Nutzer brechen ab oder sind sehr unzufrieden, kleiner Schaden möglich.
+**[ERNST]** - Deutliche Verzögerungen oder spürbare Unzufriedenheit.
+**[GERING]** - Kleine Verzögerungen oder leichte Unzufriedenheit.
+**[POSITIV]** - Funktioniert gut oder kommt gut an.`
   }
 
   /**
@@ -556,11 +548,11 @@ Each finding MUST begin with one of the following assessments:
 **[POSITIVE]** - Something that worked well in the current usability test or that test participants liked
 
 Example of correct format:
-**[CRITICAL]** Missing interaction hints make it difficult for users to understand which elements are clickable, causing test participants to give up.
+**[CRITICAL]** Test participants consistently gave up when trying to complete the booking process, indicating major user dissatisfaction.
 
-**[POSITIVE]** The color scheme is consistent and was well-received by test participants as it supports a clear visual hierarchy.
+**[POSITIVE]** The color scheme was well-received by test participants as it supports clear visual hierarchy and worked well in the usability test.
 
-**[SERIOUS]** Font sizes that are too small cause significant delays in reading and lead to moderate dissatisfaction in poor lighting conditions.
+**[SERIOUS]** Small font sizes cause significant delays in reading and lead to moderate dissatisfaction, especially in poor lighting conditions.
 
 Conduct an open, exploratory problem identification without limiting the number of problems. Let yourself be guided by the provided input and identify the most important usability challenges for real users.
 </instructions>`
@@ -621,20 +613,18 @@ Konzentriere dich auf Probleme, die **echte Nutzer in realen Situationen** beein
 ## WICHTIG: Kategorisierung der Befunde
 Jeder Befund MUSS mit einer der folgenden Bewertungen beginnen. Verwende die volle Bandbreite der Kategorien basierend auf der tatsächlichen Auswirkung auf Nutzer:
 
-**[KATASTROPHAL]** - App ist völlig unbrauchbar, Nutzer können grundlegende Aufgaben nicht erfüllen (z.B. Login unmöglich, App stürzt ab, kritische Funktionen fehlen komplett)
-**[KRITISCH]** - Schwerwiegende Probleme, die Nutzer stark frustrieren oder zum Abbruch führen (z.B. versteckte wichtige Buttons, verwirrende Navigation, unverständliche Fehlermeldungen)
-**[ERNST]** - Deutliche Beeinträchtigung der Nutzererfahrung, aber Aufgaben sind noch erfüllbar (z.B. lange Ladezeiten, unintuitives Design, schwer findbare Funktionen)
-**[GERING]** - Kleinere Unannehmlichkeiten, die die Effizienz leicht reduzieren (z.B. suboptimale Textstile, leichte Inkonsistenzen, verbesserungswürdige Details)
-**[POSITIV]** - Gut gestaltete Aspekte, die das Nutzererlebnis verbessern (z.B. klare Struktur, hilfreiche Feedback-Mechanismen, ansprechendes Design)
-
-WICHTIG: Nutze verschiedene Schweregrade! Nicht alle Probleme sind "gering" - bewerte realistisch basierend auf der Nutzerauswirkung.
+**[KATASTROPHAL]** - Existenzielle Bedrohungen, es besteht die Gefahr eines größeren Schadens für den Benutzer oder die Organisation. Diese Bewertung sollte nur nach Rücksprache mit dem Management vergeben werden, keinesfalls durch den UX Professional allein.
+**[KRITISCH]** - Die Testteilnehmer haben aufgegeben oder sind sehr unzufrieden, oder es besteht die Gefahr eines geringfügigen Schadens für den Benutzer
+**[ERNST]** - Erhebliche Verzögerungen oder mäßige Unzufriedenheit
+**[GERING]** - Spürbare Verzögerungen oder geringe Unzufriedenheit
+**[POSITIV]** - Etwas, das im Rahmen des aktuellen Usability-Tests gut funktioniert hat oder den Testteilnehmern gefallen hat
 
 Beispiel für korrektes Format:
-**[KRITISCH]** Fehlende Interaktionshinweise machen es für Nutzer schwierig zu verstehen, welche Elemente anklickbar sind, was dazu führt, dass Testteilnehmer aufgeben.
+**[KRITISCH]** Testteilnehmer gaben durchweg auf, als sie versuchten, den Buchungsvorgang abzuschließen, was auf große Unzufriedenheit hinweist.
 
-**[POSITIV]** Die Farbgebung ist konsistent und hat den Testteilnehmern gut gefallen, da sie eine klare visuelle Hierarchie unterstützt.
+**[POSITIV]** Die Farbgebung hat den Testteilnehmern gut gefallen und funktionierte im Usability-Test gut, da sie eine klare visuelle Hierarchie unterstützt.
 
-**[ERNST]** Zu kleine Schriftgrößen verursachen erhebliche Verzögerungen beim Lesen und führen zu mäßiger Unzufriedenheit bei schlechten Lichtverhältnissen.
+**[ERNST]** Kleine Schriftgrößen verursachen erhebliche Verzögerungen beim Lesen und führen zu mäßiger Unzufriedenheit, besonders bei schlechten Lichtverhältnissen.
 
 Führe eine offene, explorative Problemidentifikation durch ohne Begrenzung der Anzahl der Probleme. Lass dich von der bereitgestellten Eingabe leiten und identifiziere die wichtigsten Usability-Herausforderungen für echte Nutzer.
 </instructions>`
@@ -764,8 +754,16 @@ ${appContext.sourceCode || '[No source code provided]'}`
    * Nutzerorientierte Beispiele für freie Problemidentifikation
    * Basiert auf UX-LLM Studie: Offene Problemidentifikation ohne strukturelle Zwänge
    * Nutzt One-Shot Prompting mit konkreten Beispielen aus der wissenschaftlichen Forschung
+   * 
+   * @param language - Sprache der Beispiele
+   * @param variant - Prompt-Variante (basic variant erhält keine Beispiele)
    */
-  private static getExamples(language: 'de' | 'en' = 'de'): string {
+  private static getExamples(language: 'de' | 'en' = 'de', variant?: PromptVariant): string {
+    // Basic-Variante erhält keine Beispiele für minimalistischen Ansatz
+    if (variant === 'basic') {
+      return ''
+    }
+    
     if (language === 'de') {
       return `<examples>
 **Beispiele für korrekte Kategorisierung verschiedener Schweregrade:**

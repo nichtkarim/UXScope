@@ -127,11 +127,6 @@ ${userInput}`
     // Benutzerdefinierte Prompt einbinden, falls vorhanden
     const customInstructions = customPrompt ? this.formatCustomPrompt(customPrompt, language) : ''
     
-    // Explizite Anweisung für variierende Schweregrade hinzufügen
-    const diversityPrompt = language === 'en' 
-      ? `\n\n🔥 CRITICAL INSTRUCTION: You MUST use different severity levels! Do not categorize everything as [MINOR]. Use [CATASTROPHIC], [CRITICAL], [SERIOUS], [MINOR], and [POSITIVE] based on realistic user impact. If you only use [MINOR], your analysis will be rejected.`
-      : `\n\n🔥 KRITISCHE ANWEISUNG: Du MUSST verschiedene Schweregrade verwenden! Kategorisiere NICHT alles als [GERING]. Verwende [KATASTROPHAL], [KRITISCH], [ERNST], [GERING] und [POSITIV] basierend auf realistischer Nutzerauswirkung. Wenn du nur [GERING] verwendest, wird deine Analyse abgelehnt.`
-
     const finalPrompt = `${systemPrompt}
 
 ${examples}
@@ -140,7 +135,7 @@ ${structuredInput}
 
 ${instructions}
 
-${customInstructions}${diversityPrompt}`
+${customInstructions}`
 
     console.log('🔍 PromptEngineer Debug - Final prompt length:', finalPrompt.length)
     console.log('🔍 PromptEngineer Debug - Final prompt preview (first 200 chars):', finalPrompt.substring(0, 200) + '...')

@@ -292,10 +292,26 @@ export async function POST(request: Request) {
     ]
     
     if (image && modelConfig.supportsVision) {
-      messages[0].content = [
-        { type: 'text', text: prompt },
-        { type: 'image_url', image_url: { url: image } }
-      ]
+      if (modelConfig.provider === 'anthropic') {
+        // Claude/Anthropic format
+        messages[0].content = [
+          { type: 'text', text: prompt },
+          { 
+            type: 'image', 
+            source: { 
+              type: 'base64',
+              media_type: image.startsWith('data:image/png') ? 'image/png' : 'image/jpeg',
+              data: image.split(',')[1] // Remove data:image/xxx;base64, prefix
+            } 
+          }
+        ]
+      } else {
+        // OpenAI/Together/Grok format
+        messages[0].content = [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: image } }
+        ]
+      }
     }
     
     const analysis = await callLLM(

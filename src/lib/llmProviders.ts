@@ -4,7 +4,7 @@ export interface LLMConfig {
   id: string
   name: string
   description: string
-  provider: 'openai' | 'anthropic' | 'together' | 'local'
+  provider: 'openai' | 'anthropic' | 'together' | 'local' | 'grok'
   requiresApiKey: boolean
   supportsVision: boolean
   modelId?: string
@@ -82,6 +82,24 @@ export const LLM_MODELS: Record<string, LLMConfig> = {
     requiresApiKey: false,
     supportsVision: false,
     modelId: 'llama3'
+  },
+  'grok-beta': {
+    id: 'grok-beta',
+    name: 'Grok 4',
+    description: 'xAI\'s Grok 4 model with advanced reasoning and real-time information',
+    provider: 'grok',
+    requiresApiKey: true,
+    supportsVision: true,
+    modelId: 'grok-2-1212'
+  },
+  'grok-vision-beta': {
+    id: 'grok-vision-beta',
+    name: 'Grok 4 Vision',
+    description: 'Grok 4 model with enhanced vision capabilities',
+    provider: 'grok',
+    requiresApiKey: true,
+    supportsVision: true,
+    modelId: 'grok-2-vision-1212'
   }
 }
 
@@ -95,6 +113,8 @@ export function validateApiKey(provider: string, apiKey: string): boolean {
       return apiKey.startsWith('sk-ant-')
     case 'together':
       return apiKey.length > 10
+    case 'grok':
+      return apiKey.startsWith('xai-') || apiKey.length > 10 // Grok API keys start with 'xai-' or are longer strings
     case 'local':
       return true
     default:
@@ -133,6 +153,20 @@ async function createTogetherClient(apiKey: string): Promise<any> {
   }
 }
 
+async function createGrokClient(apiKey: string): Promise<any> {
+  try {
+    // Grok uses OpenAI-compatible API
+    const { default: OpenAI } = await import('openai')
+    return new OpenAI({ 
+      apiKey,
+      baseURL: 'https://api.x.ai/v1'
+    })
+  } catch (error) {
+    console.error('Failed to import OpenAI SDK for Grok:', error)
+    throw new Error('OpenAI SDK not available for Grok. Please install with: npm install openai')
+  }
+}
+
 async function createLLMClient(modelId: string, apiKey: string): Promise<any> {
   const config = LLM_MODELS[modelId]
   if (!config) {
@@ -148,6 +182,9 @@ async function createLLMClient(modelId: string, apiKey: string): Promise<any> {
 
     case 'together':
       return await createTogetherClient(apiKey)
+
+    case 'grok':
+      return await createGrokClient(apiKey)
 
     case 'local':
       // For local models (e.g., Ollama), we don't need a client
@@ -186,6 +223,16 @@ async function generateResponse(
     }
 
     case 'together': {
+      const completion = await client.chat.completions.create({
+        model: modelConfig.modelId,
+        messages,
+        max_tokens: 2000,
+        temperature: 0.7
+      })
+      return completion.choices[0]?.message?.content || 'No response generated'
+    }
+
+    case 'grok': {
       const completion = await client.chat.completions.create({
         model: modelConfig.modelId,
         messages,

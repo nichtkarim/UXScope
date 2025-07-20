@@ -111,6 +111,8 @@ export default function ProfileSelector({
         return apiKey.startsWith('sk-ant-') && apiKey.length > 20
       case 'together':
         return apiKey.length > 10 // Together API keys don't have a specific prefix
+      case 'grok':
+        return (apiKey.startsWith('xai-') || apiKey.length > 10) // Grok API keys start with 'xai-' or are longer strings
       case 'local':
         return true // Local models don't need API keys
       default:
@@ -236,6 +238,8 @@ export default function ProfileSelector({
         return 'sk-ant-...'
       case 'together':
         return 'Ihr Together AI API-Key'
+      case 'grok':
+        return 'xai-...'
       case 'local':
         return 'Kein API-Key erforderlich'
       default:
@@ -254,6 +258,8 @@ export default function ProfileSelector({
         return 'Erhalten Sie Ihren API-Key unter: https://console.anthropic.com/'
       case 'together':
         return 'Erhalten Sie Ihren API-Key unter: https://api.together.xyz/settings/api-keys'
+      case 'grok':
+        return 'Erhalten Sie Ihren API-Key unter: https://console.x.ai/'
       case 'local':
         return 'Lokale LLMs benötigen keinen API-Key. Stellen Sie sicher, dass Ollama läuft.'
       default:

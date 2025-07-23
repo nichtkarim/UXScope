@@ -1,4 +1,4 @@
-// File: C:\Users\Karim\Desktop\Bachelorprojekt\src\app\api\analyze\route.ts
+// File: C:\Users\Karim\WebstormProjects\UXScope\src\app\api\analyze\route.ts
 import * as entry from '../../../../../src/app/api/analyze/route.js'
 import type { NextRequest } from 'next/server.js'
 

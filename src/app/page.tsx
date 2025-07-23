@@ -1,18 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Upload, User, Settings, BarChart3, Clock, Moon, Sun, AlertCircle, Target, BookOpen, Brain } from 'lucide-react'
+import { Upload, User, Settings, BarChart3, Clock, Moon, Sun, AlertCircle } from 'lucide-react'
 import ImageUpload from '@/components/ImageUpload'
 import ProfileSelector from '@/components/ProfileSelector'
 import ContextForm from '@/components/ContextForm'
 import UsabilityAnalysis from '@/components/UsabilityAnalysis'
 import AnalysisHistoryView from '@/components/AnalysisHistoryView'
-import ScientificEvaluation from '@/components/ScientificEvaluation'
-import AlternativeEvaluation from '@/components/AlternativeEvaluation'
-import MethodologyView from '@/components/MethodologyView'
-import MethodologyReflection from '@/components/MethodologyReflection'
+
 import { profileStorage, analysisHistory } from '@/lib/storage'
-import { Profile, LLMAnalysis, UsabilityProblem } from '@/types'
+import { Profile } from '@/types'
 import { PromptVariant } from '@/lib/promptEngineering'
 
 export default function Home() {
@@ -29,14 +26,10 @@ export default function Home() {
   })
   const [analysis, setAnalysis] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [activeTab, setActiveTab] = useState<'analyze' | 'history' | 'evaluation' | 'alternative' | 'methodology' | 'reflection'>('analyze')
+  const [activeTab, setActiveTab] = useState<'analyze' | 'history'>('analyze')
   const [darkMode, setDarkMode] = useState(false)
   const [promptLanguage, setPromptLanguage] = useState<'de' | 'en'>('de')
   
-  // Wissenschaftliche Daten für die Bachelorarbeit
-  const [llmAnalyses, setLlmAnalyses] = useState<LLMAnalysis[]>([])
-  const [groundTruth, setGroundTruth] = useState<UsabilityProblem[]>([])
-  const [currentAnalysisMetadata, setCurrentAnalysisMetadata] = useState<any>(null)
   // Add state for structured findings from API
   const [currentAnalysisFindings, setCurrentAnalysisFindings] = useState<any[]>([])
 
@@ -230,26 +223,7 @@ export default function Home() {
       }
       
       setAnalysis(data.analysis)
-      setCurrentAnalysisMetadata(data.metadata)
       setCurrentAnalysisFindings(data.findings || []) // Set structured findings
-      
-      // Speichere LLM-Analyse für wissenschaftliche Auswertung
-      if (data.analyses && data.analyses.length > 0) {
-        // Verwende die strukturierten Analysen aus der API
-        setLlmAnalyses(prev => [...prev.filter(a => a.llmId !== selectedProfile.selectedModel), ...data.analyses])
-      } else if (data.metadata) {
-        // Fallback für alte API-Struktur
-        const newLLMAnalysis: LLMAnalysis = {
-          llmId: selectedProfile.selectedModel,
-          llmName: data.metadata.llmName || selectedProfile.selectedModel,
-          problems: [], // Würde in einer vollständigen Implementierung aus der Antwort geparst
-          analysisTime: new Date(),
-          promptUsed: data.metadata.promptUsed,
-          rawResponse: data.rawAnalysis || data.analysis
-        }
-        
-        setLlmAnalyses(prev => [...prev.filter(a => a.llmId !== selectedProfile.selectedModel), newLLMAnalysis])
-      }
       
       // Analyse zur Historie hinzufügen
       analysisHistory.addAnalysis({
@@ -279,7 +253,6 @@ export default function Home() {
     setUploadedImage(null)
     setContextData({ description: '', uiCode: '', userTask: '', customPrompt: '', promptVariant: 'advanced', uiMode: 'generalized' })
     setSelectedProfileId('')
-    setCurrentAnalysisMetadata(null)
     setCurrentAnalysisFindings([]) // Reset findings
   }
 
@@ -359,58 +332,6 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
                   Analyse
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('evaluation')}
-                className={`px-4 py-2 rounded-md transition-colors text-sm ${
-                  activeTab === 'evaluation'
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-500 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Evaluation
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('alternative')}
-                className={`px-4 py-2 rounded-md transition-colors text-sm ${
-                  activeTab === 'alternative'
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-500 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Brain className="h-4 w-4" />
-                  Alternative Evaluation
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('methodology')}
-                className={`px-4 py-2 rounded-md transition-colors text-sm ${
-                  activeTab === 'methodology'
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-500 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  Methodik
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('reflection')}
-                className={`px-4 py-2 rounded-md transition-colors text-sm ${
-                  activeTab === 'reflection'
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-500 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  Kritische Reflexion
                 </div>
               </button>
               <button
@@ -533,8 +454,6 @@ export default function Home() {
                     isAnalyzing={isAnalyzing}
                     onReset={handleReset}
                     promptVariant={contextData.promptVariant}
-                    promptUsed={currentAnalysisMetadata?.promptUsed}
-                    metadata={currentAnalysisMetadata}
                     findings={currentAnalysisFindings} // Pass findings to UsabilityAnalysis
                   />
                 </div>
@@ -543,33 +462,6 @@ export default function Home() {
           ) : activeTab === 'history' ? (
             <div className="max-w-4xl mx-auto">
               <AnalysisHistoryView onLoadAnalysis={handleLoadFromHistory} />
-            </div>
-          ) : activeTab === 'evaluation' ? (
-            <div className="max-w-6xl mx-auto">
-              <ScientificEvaluation 
-                llmAnalyses={llmAnalyses}
-                groundTruth={groundTruth}
-                onExportResults={(results) => {
-                  // Hier könnte man die Ergebnisse speichern oder weiterverarbeiten
-                }}
-              />
-            </div>
-          ) : activeTab === 'alternative' ? (
-            <div className="max-w-6xl mx-auto">
-              <AlternativeEvaluation 
-                llmAnalyses={llmAnalyses}
-                onExportResults={(results) => {
-                  // Hier könnte man die qualitativen Ergebnisse speichern oder weiterverarbeiten
-                }}
-              />
-            </div>
-          ) : activeTab === 'methodology' ? (
-            <div className="max-w-4xl mx-auto">
-              <MethodologyView />
-            </div>
-          ) : activeTab === 'reflection' ? (
-            <div className="max-w-4xl mx-auto">
-              <MethodologyReflection />
             </div>
           ) : (
             <div className="max-w-4xl mx-auto">

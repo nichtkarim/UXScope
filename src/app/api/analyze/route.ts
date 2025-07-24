@@ -332,6 +332,7 @@ export async function POST(request: Request) {
       rawAnalysis: analysis,
       analyses: [llmAnalysis],
       findings: findings,
+      promptUsed: prompt, // Add promptUsed as top-level field
       metadata: {
         llmModel: userProfile.selectedModel,
         llmName: modelConfig.name,

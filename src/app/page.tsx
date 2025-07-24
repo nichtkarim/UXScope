@@ -32,6 +32,10 @@ export default function Home() {
   
   // Add state for structured findings from API
   const [currentAnalysisFindings, setCurrentAnalysisFindings] = useState<any[]>([])
+  
+  // Add state for the used prompt and metadata
+  const [currentPromptUsed, setCurrentPromptUsed] = useState<string | null>(null)
+  const [currentMetadata, setCurrentMetadata] = useState<any>(null)
 
   // Profile aus localStorage laden
   useEffect(() => {
@@ -224,6 +228,8 @@ export default function Home() {
       
       setAnalysis(data.analysis)
       setCurrentAnalysisFindings(data.findings || []) // Set structured findings
+      setCurrentPromptUsed(data.promptUsed || data.metadata?.promptUsed || null) // Set the used prompt with fallback
+      setCurrentMetadata(data.metadata || null) // Set metadata
       
       // Analyse zur Historie hinzufügen
       analysisHistory.addAnalysis({
@@ -254,6 +260,8 @@ export default function Home() {
     setContextData({ description: '', uiCode: '', userTask: '', customPrompt: '', promptVariant: 'advanced', uiMode: 'generalized' })
     setSelectedProfileId('')
     setCurrentAnalysisFindings([]) // Reset findings
+    setCurrentPromptUsed(null) // Reset prompt
+    setCurrentMetadata(null) // Reset metadata
   }
 
   const handleLoadFromHistory = (historyItem: any) => {
@@ -454,6 +462,8 @@ export default function Home() {
                     isAnalyzing={isAnalyzing}
                     onReset={handleReset}
                     promptVariant={contextData.promptVariant}
+                    promptUsed={currentPromptUsed || undefined}
+                    metadata={currentMetadata}
                     findings={currentAnalysisFindings} // Pass findings to UsabilityAnalysis
                   />
                 </div>

@@ -1,8 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { BarChart3, Loader2, CheckCircle, AlertCircle, XCircle, User, Star, Clock, Target, BookOpen, Eye, Shield, Zap, Palette, HelpCircle, Download, RefreshCw, TrendingUp, Award, FileText, Skull } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { BarChart3, Loader2, CheckCircle, AlertCircle, XCircle, User, Star, Clock, Target, BookOpen, Eye, Shield, Zap, Palette, HelpCircle, Download, RefreshCw, TrendingUp, Award, FileText, Skull, ChevronDown } from 'lucide-react'
 import { PromptVariant } from '@/lib/promptEngineering'
+import { exportMeasurableData } from '@/lib/exportMeasurableData'
+import { exportToExcel } from '@/lib/excelExport'
+import { ProjectManagerModal } from './ProjectManagerModal'
+import { AddToProjectModal } from './AddToProjectModal'
 
 interface UsabilityAnalysisProps {
   analysis: string | null
@@ -29,6 +33,16 @@ interface UsabilityAnalysisProps {
       email: string
     }
   }
+  // Add context data and language for export
+  contextData?: {
+    description: string
+    userTask: string
+    uiCode?: string
+    customPrompt?: string
+    promptVariant: PromptVariant
+    uiMode: string
+  }
+  promptLanguage?: 'de' | 'en'
 }
 
 interface ParsedSection {
@@ -39,7 +53,17 @@ interface ParsedSection {
   textPosition?: number
 }
 
-export default function UsabilityAnalysis({ analysis, isAnalyzing, onReset, promptVariant = 'advanced', promptUsed, findings, metadata }: UsabilityAnalysisProps) {
+export default function UsabilityAnalysis({ 
+  analysis, 
+  isAnalyzing, 
+  onReset, 
+  promptVariant = 'advanced', 
+  promptUsed, 
+  findings, 
+  metadata, 
+  contextData, 
+  promptLanguage = 'de' 
+}: UsabilityAnalysisProps) {
   
   // Bestimme die tatsächliche Prompt-Variante (Vorrang: Metadata)
   const variant = metadata?.promptVariant ?? promptVariant
@@ -49,9 +73,60 @@ export default function UsabilityAnalysis({ analysis, isAnalyzing, onReset, prom
   // State for prompt details dropdown
   const [showPromptDetails, setShowPromptDetails] = useState(false)
   
+  // State for export dropdown
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
+  
   // State for JavaScript-based tooltips
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
+  
+  // State for Project Management Modals
+  const [showProjectManager, setShowProjectManager] = useState(false)
+  const [showAddToProject, setShowAddToProject] = useState(false)
+  
+  // Helper function to prepare current analysis data for project storage
+  const prepareAnalysisDataForProject = () => {
+    if (!analysis || !metadata) return null;
+    
+    // Convert current analysis to ExcelExportData format
+    const now = new Date();
+    const exportId = `UXS_${now.getFullYear()}_${(now.getMonth() + 1).toString().padStart(2, '0')}_${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+    
+    // Process befunde from parsed sections
+    const befunde = parsedSections
+      .filter(section => section.type !== 'summary')
+      .map((section, index) => ({
+        befundId: `${exportId}_B${(index + 1).toString().padStart(3, '0')}`,
+        kategorie: promptVariant === 'study-pure' ? 'Befund' : section.type,
+        schweregrad: promptVariant === 'study-pure' ? 'Nicht bewertet' : section.severity,
+        titel: promptVariant === 'study-pure' ? `Befund ${index + 1}` : section.title,
+        beschreibung: section.content[0] || '',
+        position: section.textPosition || -1
+      }));
+    
+    return {
+      titel: `Usability-Analyse ${promptVariant?.toUpperCase() || 'UNKNOWN'}`,
+      datum: now.toLocaleDateString('de-DE'),
+      zeit: now.toLocaleTimeString('de-DE'),
+      exportId: exportId,
+      promptVariante: promptVariant === 'study-pure' ? 'Study-Pure (A)' : 
+                     promptVariant === 'basic' ? 'Basic (B)' : 'Advanced (C)',
+      promptSprache: promptLanguage === 'de' ? 'Deutsch' : 'English',
+      llmModell: `${metadata.llmName || 'Unbekannt'} (${metadata.llmModel || 'Unbekannt'})`,
+      
+      appOverview: contextData?.description || 'Keine Beschreibung verfügbar',
+      eingegebenerCode: contextData?.uiCode || 'Kein Code eingegeben',
+      benutzerAufgabe: contextData?.userTask || 'Keine Aufgabe definiert',
+      
+      befunde: befunde,
+      vollstaendigeAnalyse: analysis,
+      
+      verarbeitungszeit: metadata.processingTimeMs || 0,
+      bildVorhanden: metadata.imageProvided || false,
+      kontextVorhanden: metadata.contextProvided || false,
+      visionUnterstuetzt: metadata.supportsVision || false
+    };
+  };
 
   const handleTooltipShow = (tooltipId: string, event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -68,6 +143,32 @@ export default function UsabilityAnalysis({ analysis, isAnalyzing, onReset, prom
   const handleTooltipHide = () => {
     setActiveTooltip(null)
   }
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      
+      // Prüfe ob der Klick innerhalb des Dropdown-Containers ist
+      const isDropdownClick = target.closest('.export-dropdown-container')
+      
+      if (showExportDropdown && !isDropdownClick) {
+        console.log('Closing dropdown due to outside click')
+        setShowExportDropdown(false)
+      }
+    }
+    
+    if (showExportDropdown) {
+      // Verzögerung hinzufügen, damit der Button-Click zuerst verarbeitet wird
+      setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside)
+      }, 100)
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showExportDropdown])
   
   // Funktion zum Parsen von STUDY-PURE Befunden
   const parseStudyPureFindings = (text: string): string[] => {
@@ -119,8 +220,9 @@ export default function UsabilityAnalysis({ analysis, isAnalyzing, onReset, prom
   const exportReport = () => {
     if (!analysis) return
     
-    const reportContent = `
-USABILITY-ANALYSE BERICHT
+    console.log('Text export function called')
+    
+    const reportContent = `USABILITY-ANALYSE BERICHT
 ========================
 
 Datum: ${new Date().toLocaleDateString('de-DE')}
@@ -135,18 +237,353 @@ ${variant === 'study-pure'
   : variant === 'advanced' 
     ? 'Basierend auf Nielsen\'s Heuristiken, ISO 9241-11 und WCAG 2.1' 
     : 'Basierend auf der UX-LLM Studie (IEEE Xplore: 11029918)'
-}
-    `.trim()
+}`
     
-    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `Usability-Analyse-${new Date().toISOString().split('T')[0]}.txt`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    // Fallback: Zeige Daten in neuem Fenster
+    const newWindow = window.open('', '_blank')
+    if (newWindow) {
+      newWindow.document.write(`
+        <html>
+          <head>
+            <title>Usability-Analyse-${new Date().toISOString().split('T')[0]}.txt</title>
+            <style>
+              body { 
+                font-family: 'Courier New', monospace; 
+                white-space: pre-wrap; 
+                padding: 20px; 
+                background: #f5f5f5;
+                margin: 0;
+              }
+              .header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                border-bottom: 1px solid #ddd;
+                padding: 10px 20px;
+                z-index: 1000;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              }
+              .download-btn {
+                background: #007bff;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+              }
+              .download-btn:hover {
+                background: #0056b3;
+              }
+              .content {
+                margin-top: 60px;
+                background: white;
+                padding: 20px;
+                border-radius: 5px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              .copy-btn {
+                background: #28a745;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                margin-left: 10px;
+              }
+              .copy-btn:hover {
+                background: #1e7e34;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h3>Usability-Analyse Export</h3>
+              <div>
+                <button class="download-btn" onclick="downloadFile()">Download als .txt</button>
+                <button class="copy-btn" onclick="copyToClipboard()">In Zwischenablage kopieren</button>
+              </div>
+            </div>
+            <div class="content">${reportContent}</div>
+            
+            <script>
+              function downloadFile() {
+                try {
+                  const content = document.querySelector('.content').textContent;
+                  const filename = 'Usability-Analyse-${new Date().toISOString().split('T')[0]}.txt';
+                  
+                  // Methode 1: Blob + Download
+                  const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+                  
+                  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                    // Internet Explorer
+                    window.navigator.msSaveOrOpenBlob(blob, filename);
+                  } else {
+                    // Moderne Browser
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    }, 100);
+                  }
+                  
+                  alert('Download gestartet!');
+                } catch (error) {
+                  console.error('Download failed:', error);
+                  alert('Download fehlgeschlagen. Bitte verwenden Sie "In Zwischenablage kopieren".');
+                }
+              }
+              
+              function copyToClipboard() {
+                try {
+                  const content = document.querySelector('.content').textContent;
+                  if (navigator.clipboard) {
+                    navigator.clipboard.writeText(content).then(() => {
+                      alert('Text wurde in die Zwischenablage kopiert!');
+                    });
+                  } else {
+                    // Fallback für ältere Browser
+                    const textArea = document.createElement('textarea');
+                    textArea.value = content;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Text wurde in die Zwischenablage kopiert!');
+                  }
+                } catch (error) {
+                  console.error('Copy failed:', error);
+                  alert('Kopieren fehlgeschlagen. Bitte markieren Sie den Text manuell und drücken Sie Strg+C.');
+                }
+              }
+            </script>
+          </body>
+        </html>
+      `)
+      newWindow.document.close()
+      console.log('Text opened in new window with enhanced download functionality')
+    } else {
+      alert('Popup wurde blockiert. Bitte erlauben Sie Popups für diese Seite oder kopieren Sie den Text aus der Konsole.')
+      console.log('Report Content:', reportContent)
+    }
+  }
+
+  const exportMeasurableDataForAnalysis = () => {
+    console.log('Export function called')
+    
+    if (!analysis) {
+      alert('Keine Analyse zum Exportieren verfügbar')
+      return
+    }
+
+    try {
+      console.log('Generating export data...')
+      
+      // Verwende die bereits berechneten summary-Werte von der Webseite
+      const exportData = exportMeasurableData(
+        analysis,
+        metadata,
+        promptUsed || '',
+        contextData,
+        promptVariant,
+        promptLanguage,
+        summary // Übergebe die bereits berechneten Werte
+      )
+      
+      const filename = `measurable_analysis_${exportData.meta.llm_model}_${exportData.meta.prompt_variant}_${Date.now()}.json`
+      const jsonString = JSON.stringify(exportData, null, 2)
+      
+      // Fallback: Zeige JSON in neuem Fenster
+      const newWindow = window.open('', '_blank')
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head>
+              <title>${filename}</title>
+              <style>
+                body { 
+                  font-family: 'Courier New', monospace; 
+                  padding: 20px; 
+                  background: #f5f5f5;
+                  margin: 0;
+                }
+                .header {
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  background: white;
+                  border-bottom: 1px solid #ddd;
+                  padding: 10px 20px;
+                  z-index: 1000;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                }
+                .download-btn {
+                  background: #28a745;
+                  color: white;
+                  border: none;
+                  padding: 8px 16px;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 14px;
+                }
+                .download-btn:hover {
+                  background: #1e7e34;
+                }
+                .copy-btn {
+                  background: #17a2b8;
+                  color: white;
+                  border: none;
+                  padding: 8px 16px;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 14px;
+                  margin-left: 10px;
+                }
+                .copy-btn:hover {
+                  background: #138496;
+                }
+                .content {
+                  margin-top: 60px;
+                  background: white;
+                  padding: 20px;
+                  border-radius: 5px;
+                  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                  white-space: pre-wrap;
+                  font-size: 12px;
+                  overflow-x: auto;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h3>📊 Messbare Daten Export</h3>
+                <div>
+                  <button class="download-btn" onclick="downloadFile()">Download als .json</button>
+                  <button class="copy-btn" onclick="copyToClipboard()">In Zwischenablage kopieren</button>
+                </div>
+              </div>
+              <div class="content">${jsonString}</div>
+              
+              <script>
+                function downloadFile() {
+                  try {
+                    const content = document.querySelector('.content').textContent;
+                    const filename = '${filename}';
+                    
+                    // Methode 1: Blob + Download
+                    const blob = new Blob([content], {type: 'application/json;charset=utf-8'});
+                    
+                    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                      // Internet Explorer
+                      window.navigator.msSaveOrOpenBlob(blob, filename);
+                    } else {
+                      // Moderne Browser
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.style.display = 'none';
+                      a.href = url;
+                      a.download = filename;
+                      document.body.appendChild(a);
+                      a.click();
+                      setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      }, 100);
+                    }
+                    
+                    alert('Download gestartet!');
+                  } catch (error) {
+                    console.error('Download failed:', error);
+                    alert('Download fehlgeschlagen. Bitte verwenden Sie "In Zwischenablage kopieren".');
+                  }
+                }
+                
+                function copyToClipboard() {
+                  try {
+                    const content = document.querySelector('.content').textContent;
+                    if (navigator.clipboard) {
+                      navigator.clipboard.writeText(content).then(() => {
+                        alert('JSON-Daten wurden in die Zwischenablage kopiert!');
+                      });
+                    } else {
+                      // Fallback für ältere Browser
+                      const textArea = document.createElement('textarea');
+                      textArea.value = content;
+                      document.body.appendChild(textArea);
+                      textArea.select();
+                      document.execCommand('copy');
+                      document.body.removeChild(textArea);
+                      alert('JSON-Daten wurden in die Zwischenablage kopiert!');
+                    }
+                  } catch (error) {
+                    console.error('Copy failed:', error);
+                    alert('Kopieren fehlgeschlagen. Bitte markieren Sie den Text manuell und drücken Sie Strg+C.');
+                  }
+                }
+              </script>
+            </body>
+          </html>
+        `)
+        newWindow.document.close()
+        
+        // Erfolgs-Feedback
+        const metrics = exportData.measurable_metrics
+        alert(`📊 Export bereit!\n\nDaten werden in neuem Fenster angezeigt.\nKlicken Sie auf "Download als .json" um die Datei zu speichern.\n\nMessbare Daten:\n• ${metrics.total_words} Wörter\n• ${metrics.total_problem_mentions} Problem-Erwähnungen\n• ${metrics.recommendation_count} Empfehlungen`)
+        console.log('JSON opened in new window with download button')
+      } else {
+        alert('Popup wurde blockiert. Bitte erlauben Sie Popups für diese Seite oder kopieren Sie die JSON-Daten aus der Konsole.')
+        console.log('Export Data:', exportData)
+      }
+      
+    } catch (error) {
+      console.error('Error during export:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler'
+      alert(`Fehler beim Export: ${errorMessage}`)
+    }
+  }
+
+  const exportToExcelForAnalysis = () => {
+    console.log('Excel Export function called')
+    
+    if (!analysis) {
+      alert('Keine Analyse zum Exportieren verfügbar')
+      return
+    }
+
+    try {
+      console.log('Generating Excel export...')
+      
+      // Starte Excel-Export mit allen verfügbaren Daten
+      exportToExcel(
+        analysis,
+        metadata,
+        promptUsed || '',
+        contextData,
+        promptVariant,
+        promptLanguage,
+        summary,
+        parsedSections
+      )
+      
+    } catch (error) {
+      console.error('Error during Excel export:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler'
+      alert(`Fehler beim Excel-Export: ${errorMessage}`)
+    }
   }
 
   const handleReset = () => {
@@ -641,7 +1078,7 @@ ${variant === 'study-pure'
               wählen Sie ein Profil mit LLM-Integration, um eine detaillierte Analyse zu erhalten.
             </p>
             {variant === 'advanced' && (
-              <div className="flex flex-wrap gap-2 justify-center">
+              <div className="flex flex-wrap gap-2 justify-center mb-6">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
                   <BookOpen className="h-3 w-3 mr-1" />
                   10 Nielsen-Heuristiken
@@ -655,6 +1092,16 @@ ${variant === 'study-pure'
                   Barrierefreiheit
                 </span>
               </div>
+            )}
+            {/* Show reset button if onReset is available (means an analysis was previously performed) */}
+            {onReset && (
+              <button 
+                onClick={onReset}
+                className="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Neue Analyse
+              </button>
             )}
           </div>
         </div>
@@ -701,7 +1148,7 @@ ${variant === 'study-pure'
       {/* Header */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-600 rounded-lg">
                 <CheckCircle className="h-6 w-6 text-white" />
@@ -721,21 +1168,73 @@ ${variant === 'study-pure'
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
+            
+            {/* Buttons in separate row */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Direct Export Buttons */}
               <button 
-                onClick={exportReport}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors shadow-sm"
+                onClick={() => {
+                  console.log('=== TEXT EXPORT BUTTON CLICKED ===')
+                  exportReport()
+                }}
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-black dark:text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg border-0"
               >
-                <Download className="h-4 w-4 mr-2" />
-                Export
+                <FileText className="h-4 w-4 mr-2 text-black dark:text-white" />
+                Text-Bericht
               </button>
+              
+              <button 
+                onClick={() => {
+                  console.log('=== JSON EXPORT BUTTON CLICKED ===')
+                  exportMeasurableDataForAnalysis()
+                }}
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-black dark:text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg border-0"
+              >
+                <BarChart3 className="h-4 w-4 mr-2 text-black dark:text-white" />
+                Messbare Daten
+              </button>
+              
+              <button 
+                onClick={() => {
+                  console.log('=== EXCEL EXPORT BUTTON CLICKED ===')
+                  exportToExcelForAnalysis()
+                }}
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-black dark:text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg border-0"
+              >
+                <Download className="h-4 w-4 mr-2 text-black dark:text-white" />
+                Excel-Export
+              </button>
+              
               <button 
                 onClick={handleReset}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors shadow-sm"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Neue Analyse
               </button>
+            </div>
+            
+            {/* Project Management Buttons - Separate Row */}
+            <div className="flex gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  🎯 Projekt-Management (MSAA)
+                </h4>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setShowAddToProject(true)}
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
+                    📁 Zu Projekt hinzufügen
+                  </button>
+                  <button 
+                    onClick={() => setShowProjectManager(true)}
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
+                    🗂️ Projekt-Manager
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -1148,6 +1647,21 @@ ${variant === 'study-pure'
           )}
         </div>
       </div>
+      
+      {/* Project Management Modals */}
+      <ProjectManagerModal 
+        isOpen={showProjectManager}
+        onClose={() => setShowProjectManager(false)}
+      />
+      
+      <AddToProjectModal 
+        isOpen={showAddToProject}
+        onClose={() => setShowAddToProject(false)}
+        analysisData={prepareAnalysisDataForProject()}
+        onSuccess={(projectId, surfaceName) => {
+          console.log(`✅ Analyse "${surfaceName}" erfolgreich zu Projekt ${projectId} hinzugefügt!`);
+        }}
+      />
     </div>
   )
 }

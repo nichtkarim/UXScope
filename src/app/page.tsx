@@ -465,6 +465,8 @@ export default function Home() {
                     promptUsed={currentPromptUsed || undefined}
                     metadata={currentMetadata}
                     findings={currentAnalysisFindings} // Pass findings to UsabilityAnalysis
+                    contextData={contextData} // Pass context data for export
+                    promptLanguage={promptLanguage} // Pass prompt language for export
                   />
                 </div>
               </div>

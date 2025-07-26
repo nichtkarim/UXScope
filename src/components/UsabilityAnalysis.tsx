@@ -1230,7 +1230,7 @@ ${variant === 'study-pure'
                 <div className="flex gap-2">
                   <button 
                     onClick={() => setShowAddToProject(true)}
-                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
                   >
                     📁 Zu Projekt hinzufügen
                   </button>
@@ -1254,7 +1254,7 @@ ${variant === 'study-pure'
                   <button 
                     onClick={() => setShowMultiLLMModal(true)}
                     disabled={!contextData}
-                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 disabled:text-gray-400 disabled:dark:text-gray-500 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:bg-gray-100 disabled:dark:bg-gray-700 border border-gray-300 dark:border-gray-600 disabled:border-gray-200 disabled:dark:border-gray-600 disabled:cursor-not-allowed rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
                   >
                     <Zap className="h-4 w-4 mr-2" />
                     LLM-Vergleich starten

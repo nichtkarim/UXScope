@@ -7,6 +7,8 @@ import { exportMeasurableData } from '@/lib/exportMeasurableData'
 import { exportToExcel } from '@/lib/excelExport'
 import { ProjectManagerModal } from './ProjectManagerModal'
 import { AddToProjectModal } from './AddToProjectModal'
+import { MultiLLMAnalyzer, MultiLLMAnalysisRequest } from '@/lib/multiLLMAnalysis'
+import { MultiLLMModal } from './MultiLLMModal'
 
 interface UsabilityAnalysisProps {
   analysis: string | null
@@ -83,6 +85,11 @@ export default function UsabilityAnalysis({
   // State for Project Management Modals
   const [showProjectManager, setShowProjectManager] = useState(false)
   const [showAddToProject, setShowAddToProject] = useState(false)
+  
+  // State for Multi-LLM Analysis
+  const [showMultiLLMModal, setShowMultiLLMModal] = useState(false)
+  const [multiLLMRunning, setMultiLLMRunning] = useState(false)
+  const [multiLLMResults, setMultiLLMResults] = useState<any>(null)
   
   // Helper function to prepare current analysis data for project storage
   const prepareAnalysisDataForProject = () => {
@@ -1236,6 +1243,36 @@ ${variant === 'study-pure'
                 </div>
               </div>
             </div>
+            
+            {/* Multi-LLM Analysis Section */}
+            <div className="flex gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  ⚡ Multi-LLM Parallel Analysis
+                </h4>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setShowMultiLLMModal(true)}
+                    disabled={!contextData}
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    LLM-Vergleich starten
+                  </button>
+                  {multiLLMRunning && (
+                    <div className="inline-flex items-center px-3 py-2 text-sm text-purple-700 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-300 rounded-lg">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Multi-LLM läuft...
+                    </div>
+                  )}
+                </div>
+                {!contextData && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    💡 Kontext-Daten erforderlich für Multi-LLM Analyse
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
           
           {/* Prompt Details Toggle - Separate Row */}
@@ -1660,6 +1697,19 @@ ${variant === 'study-pure'
         analysisData={prepareAnalysisDataForProject()}
         onSuccess={(projectId, surfaceName) => {
           console.log(`✅ Analyse "${surfaceName}" erfolgreich zu Projekt ${projectId} hinzugefügt!`);
+        }}
+      />
+      
+      {/* Multi-LLM Analysis Modal */}
+      <MultiLLMModal 
+        isOpen={showMultiLLMModal}
+        onClose={() => setShowMultiLLMModal(false)}
+        contextData={contextData}
+        promptVariant={promptVariant}
+        promptLanguage={promptLanguage}
+        onResultsReady={(results) => {
+          setMultiLLMResults(results);
+          console.log(`✅ Multi-LLM Analysis abgeschlossen: ${results.successfulAnalyses}/${results.totalLLMs} erfolgreich`);
         }}
       />
     </div>
